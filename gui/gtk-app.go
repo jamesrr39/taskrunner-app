@@ -113,12 +113,8 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRun(jobRun *taskrunner.JobRun) {
 	isFinished := (jobRun.EndTimestamp != 0)
 
 	vbox := gtk.NewVBox(false, 5)
-	topBar := gtk.NewHPaned()
-	runIdLabel := gtk.NewLabel("#" + strconv.Itoa(jobRun.Id))
-	topBar.Add(runIdLabel)
-	topBar.Add(gtk.NewLabel(jobRun.Job.Name))
+	vbox.Add(gtk.NewLabel("#" + strconv.Itoa(jobRun.Id) + " :: " + jobRun.Job.Name))
 
-	vbox.Add(topBar)
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
 	vbox.Add(gtk.NewLabel("Started: " + startDateTime.String()))
 
