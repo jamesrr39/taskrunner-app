@@ -1,0 +1,14 @@
+package: .
+import:
+- package: github.com/alecthomas/kingpin
+  version: v2.2.3
+- package: github.com/bradfitz/slice
+- package: github.com/jamesrr39/goutil
+  subpackages:
+  - user
+- package: github.com/mattn/go-gtk
+  subpackages:
+  - gdk
+  - glib
+  - gtk
+- package: taskrunner
