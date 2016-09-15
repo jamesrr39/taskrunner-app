@@ -1,0 +1,3 @@
+--config-dir=res/testconfig/ run-job test_job
+
+--config-dir=res/testconfig/ list-jobs
