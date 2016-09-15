@@ -1,0 +1,11 @@
+{
+	"name": "test_job",
+	"description": "an example job",
+	"steps": [{
+		"name": "some echoing",
+		"cmd": "echo 'test job\nmore test jobs'; echo 'new line';"
+	},{
+		"name": "more echoing",
+		"cmd": "echo abc | sed -e 's/a/d/g'"
+	}]
+}
