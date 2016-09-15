@@ -61,15 +61,15 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderHomeScreen() {
 	box := gtk.NewVBox(false, 0)
 	var widget gtk.IWidget
 
-	titleLabel := gtk.NewLabel("Taskrunner (" + taskrunnerInstance.Basepath + ")")
-	box.Add(titleLabel)
+	var titleLabel gtk.IWidget = gtk.NewLabel("Taskrunner (" + taskrunnerInstance.Basepath + ")")
+	box.PackStart(titleLabel, false, true, 5)
 	jobsTable, err := taskrunnerGUI.buildJobsSummaryTable()
 	if nil != err {
 		widget = gtk.NewLabel(err.Error())
 	} else {
 		widget = jobsTable
 	}
-	box.Add(widget)
+	box.PackStart(widget, false, false, 5)
 
 	taskrunnerGUI.renderNewContent(box)
 }
@@ -96,15 +96,20 @@ func (taskrunnerGUI *TaskrunnerGUI) renderNewContent(content gtk.IWidget) {
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) RenderJobRuns(job *taskrunner.Job) {
-	var paneContent gtk.IWidget
+	box := gtk.NewVBox(false, 5)
 
+	box.PackStart(gtk.NewLabel("Runs for "+job.Name), false, false, 5)
+
+	var listing gtk.IWidget
 	table, err := taskrunnerGUI.buildJobRunsTable(job)
 	if nil != err {
-		paneContent = gtk.NewLabel("Error fetching job runs for " + job.Name + ". Error: " + err.Error())
+		listing = gtk.NewLabel("Error fetching job runs for " + job.Name + ". Error: " + err.Error())
 	} else {
-		paneContent = table
+		listing = table
 	}
-	taskrunnerGUI.renderNewContent(paneContent)
+	box.PackStart(listing, false, false, 5)
+
+	taskrunnerGUI.renderNewContent(gtk.IWidget(box))
 
 }
 
