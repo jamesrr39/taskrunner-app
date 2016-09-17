@@ -118,10 +118,10 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRun(jobRun *taskrunner.JobRun) {
 	isFinished := (jobRun.EndTimestamp != 0)
 
 	vbox := gtk.NewVBox(false, 5)
-	vbox.Add(gtk.NewLabel("#" + strconv.Itoa(jobRun.Id) + " :: " + jobRun.Job.Name))
+	vbox.PackStart(gtk.IWidget(gtk.NewLabel("#"+strconv.Itoa(jobRun.Id)+" :: "+jobRun.Job.Name)), false, false, 0)
 
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
-	vbox.Add(gtk.NewLabel("Started: " + startDateTime.String()))
+	vbox.PackStart(gtk.IWidget(gtk.NewLabel("Started: "+startDateTime.String())), false, false, 0)
 
 	var durationStr string
 	if !isFinished {
@@ -130,10 +130,10 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRun(jobRun *taskrunner.JobRun) {
 		durationStr = "Ran for " + time.Unix(jobRun.EndTimestamp, 0).Sub(startDateTime).String()
 	}
 
-	vbox.Add(gtk.NewLabel(durationStr))
+	vbox.PackStart(gtk.IWidget(gtk.NewLabel(durationStr)), false, false, 0)
 
 	if isFinished {
-		vbox.Add(gtk.NewLabel("Finished successfully? " + strconv.FormatBool(jobRun.Successful)))
+		vbox.PackStart(gtk.IWidget(gtk.NewLabel("Finished successfully? "+strconv.FormatBool(jobRun.Successful))), false, false, 0)
 	}
 
 	stdoutTextareaScrollWindow := gtk.NewScrolledWindow(nil, nil)
@@ -152,7 +152,7 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRun(jobRun *taskrunner.JobRun) {
 	}
 
 	stdoutTextareaScrollWindow.Add(stdoutTextarea)
-	vbox.Add(stdoutTextareaScrollWindow)
+	vbox.PackStart(gtk.IWidget(stdoutTextareaScrollWindow), true, true, 0)
 
 	var container gtk.IWidget = vbox
 	taskrunnerGUI.renderNewContent(container)
