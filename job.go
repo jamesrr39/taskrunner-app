@@ -2,8 +2,8 @@ package taskrunner
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/bradfitz/slice"
 	"io"
 	"io/ioutil"
 	"log"
@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/bradfitz/slice"
 )
 
 type Job struct {
@@ -20,8 +22,12 @@ type Job struct {
 	TaskrunnerInstance *TaskrunnerInstance `json:"-"`
 }
 
-func NewJob(name string, description string, steps []*Step, taskrunnerInstance *TaskrunnerInstance) *Job {
-	return &Job{Name: name, Description: description, Steps: steps, TaskrunnerInstance: taskrunnerInstance}
+func NewJob(name string, description string, steps []*Step, taskrunnerInstance *TaskrunnerInstance) (*Job, error) {
+	if "" == name {
+		return nil, errors.New("A job must have a name")
+	}
+
+	return &Job{Name: name, Description: description, Steps: steps, TaskrunnerInstance: taskrunnerInstance}, nil
 }
 
 func (job *Job) Path() string {
@@ -119,7 +125,7 @@ func (job *Job) Runs() ([]*JobRun, error) {
 	}
 
 	slice.Sort(runs, func(i, j int) bool {
-		return runs[i].Id < runs[j].Id
+		return runs[i].Id > runs[j].Id
 	})
 
 	return runs, nil
@@ -166,4 +172,19 @@ func (job *Job) GetRun(id int) (*JobRun, error) {
 	jobRun.Job = job
 
 	return jobRun, nil
+}
+
+func (job *Job) Save() error {
+	jobFolderPath := job.Path()
+	err := os.MkdirAll(jobFolderPath, 0700)
+	if nil != err {
+		return err
+	}
+
+	fileBytes, err := json.MarshalIndent(job, "", "	")
+	if nil != err {
+		return err
+	}
+
+	return ioutil.WriteFile(filepath.Join(jobFolderPath, "config.json"), fileBytes, 0600)
 }
