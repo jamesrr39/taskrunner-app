@@ -3,11 +3,11 @@ package taskrunner
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -15,87 +15,154 @@ import (
 	"github.com/bradfitz/slice"
 )
 
+const TASKRUNNER_SOURCE_NAME string = "TASKRUNNER"
+
+type Script string
+
 type Job struct {
+	Id                 uint                `json:"-"`
 	Name               string              `json:"name"`
 	Description        string              `json:"description"`
-	Steps              []*Step             `json:"steps"`
+	Script             Script              `json:"script"`
 	TaskrunnerInstance *TaskrunnerInstance `json:"-"`
 }
 
-func NewJob(name string, description string, steps []*Step, taskrunnerInstance *TaskrunnerInstance) (*Job, error) {
+func NewJob(name string, description string, script Script, taskrunnerInstance *TaskrunnerInstance) (*Job, error) {
 	if "" == name {
 		return nil, errors.New("A job must have a name")
 	}
 
-	return &Job{Name: name, Description: description, Steps: steps, TaskrunnerInstance: taskrunnerInstance}, nil
+	id, err := taskrunnerInstance.nextId()
+	if nil != err {
+		return nil, err
+	}
+
+	return &Job{Id: id, Name: name, Description: description, Script: script, TaskrunnerInstance: taskrunnerInstance}, nil
 }
 
 func (job *Job) Path() string {
-	return filepath.Join(job.TaskrunnerInstance.Basepath, "jobs", job.Name)
+	return filepath.Join(job.TaskrunnerInstance.Basepath, "jobs", strconv.Itoa(int(job.Id)))
 }
 
-func (j *Job) String() string {
-	return fmt.Sprintf("Job[Name=%s, Description=%s, Steps=%v]", j.Name, j.Description, j.Steps)
+// cleans previous workspace, creates folder for new workspace
+func (job *Job) cleanWorkspace() error {
+	workspacePath := job.workspacePath()
+	err := os.RemoveAll(workspacePath)
+	if nil != err {
+		return err
+	}
+	err = os.MkdirAll(workspacePath, 0700)
+	return err
 }
 
-func (job *Job) Run(trigger string) error {
-	jobBasepath := job.Path()
-	jobId, jobRunPath, err := createNewJobRunFolder(filepath.Join(jobBasepath, job.Name))
+func (job *Job) workspacePath() string {
+	return filepath.Join(job.Path(), "workspace")
+}
+
+func (job *Job) prepareAndMoveToWorkspace() error {
+	err := job.cleanWorkspace()
 	if nil != err {
-		return err
+		return errors.New("Couldn't clean workspace")
 	}
-
-	stdoutFile, err := os.Create(filepath.Join(jobRunPath, "stdout.log"))
+	err = os.Chdir(job.workspacePath())
 	if nil != err {
-		return err
+		return errors.New("Couldn't change directory to workspace directory (" + job.workspacePath() + "). Error: " + err.Error())
 	}
-	defer stdoutFile.Close()
-
-	stderrFile, err := os.Create(filepath.Join(jobRunPath, "stderr.log"))
-	if nil != err {
-		return err
-	}
-	defer stderrFile.Close()
-
-	startTimestamp := time.Now().Unix()
-
-	successful := false
-	if err := job.runSteps(jobRunPath, stdoutFile, stderrFile); nil == err {
-		successful = true
-	}
-
-	stdoutFile.Sync()
-	stderrFile.Sync()
-
-	endTimestamp := time.Now().Unix()
-
-	jobRun := job.NewJobRun(jobId, successful, startTimestamp, endTimestamp, trigger)
-	if err = jobRun.WriteToDisk(jobRunPath); err != nil {
-		return err
-	}
-
 	return nil
 }
 
-func (job *Job) runSteps(jobRunPath string, stdoutFile io.Writer, stderrFile io.Writer) error {
-	for index, step := range job.Steps {
-		stdoutFile.Write([]byte("Starting step " + strconv.Itoa(index) + "\n"))
-		err := step.Run(jobRunPath, stdoutFile, stderrFile)
-		if nil != err {
-			log.Printf("Error executing step %d: '%s'. Error: %s\n", index, step.Cmd, err)
-			return err
+// handles errors caused by the internal workings of taskrunner (not the script)
+func handleTaskrunnerError(errorMessage string, logFile io.Writer, jobRun *JobRun) {
+	jobRun.State = JOB_RUN_STATE_FAILED
+	writeStringToLogFile(errorMessage, logFile, TASKRUNNER_SOURCE_NAME)
+}
+
+// change dir to workspace, write script file run
+// error would be an error that prevents the job from logging
+func (job *Job) Run(trigger TriggerType) (*JobRun, error) {
+	jobRunId, _, err := job.createNewJobRunFolder()
+	if nil != err {
+		return nil, err
+	}
+
+	jobRun := &JobRun{Id: jobRunId, Job: job, StartTimestamp: time.Now().Unix(), Trigger: trigger, State: JOB_RUN_STATE_IN_PROGRESS}
+
+	logFile, err := os.Create(jobRun.LogFilePath())
+	if nil != err {
+		return nil, err
+	}
+	defer logFile.Close()
+
+	err = job.prepareAndMoveToWorkspace()
+	if nil != err {
+		handleTaskrunnerError("Couldn't prepare and move to workspace. Error: "+err.Error(), logFile, jobRun)
+		return jobRun, nil
+	}
+
+	scriptFilePath := filepath.Join(job.workspacePath(), "script")
+	err = ioutil.WriteFile(scriptFilePath, []byte(job.Script), 0700)
+	if nil != err {
+		handleTaskrunnerError("Couldn't prepare and move to workspace. Error: "+err.Error(), logFile, jobRun)
+		return jobRun, nil
+	}
+
+	cmd := exec.Command(scriptFilePath)
+	stdoutPipe, err := cmd.StdoutPipe()
+	if nil != err {
+		handleTaskrunnerError("Couldn't obtain stdoutpipe. Error: "+err.Error(), logFile, jobRun)
+		return jobRun, nil
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if nil != err {
+		handleTaskrunnerError("Couldn't obtain stderrpipe. Error: "+err.Error(), logFile, jobRun)
+		return jobRun, nil
+	}
+
+	go writeToLogFile(stdoutPipe, logFile, "STDOUT")
+	go writeToLogFile(stderrPipe, logFile, "STDERR")
+
+	err = cmd.Start()
+	if nil != err {
+		handleTaskrunnerError("Couldn't start script. Error: "+err.Error(), logFile, jobRun)
+		return jobRun, nil
+	}
+
+	jobRun.Pid = cmd.Process.Pid
+	writeToDiskErr := jobRun.WriteToDisk()
+
+	err = cmd.Wait()
+	if nil != err {
+		switch err.(type) {
+		case *exec.ExitError:
+			jobRun.State = JOB_RUN_STATE_FAILED
+		default:
+			jobRun.State = JOB_RUN_STATE_UNKNOWN
 		}
-		stdoutFile.Write([]byte("Finished step " + strconv.Itoa(index) + "\n"))
+	} else {
+		jobRun.State = JOB_RUN_STATE_SUCCESS
 	}
-	return nil
+
+	jobRun.EndTimestamp = time.Now().Unix()
+
+	if nil != writeToDiskErr {
+		return nil, writeToDiskErr
+	}
+
+	if err = jobRun.WriteToDisk(); err != nil {
+		return nil, err
+	}
+
+	logFile.Sync()
+
+	return jobRun, nil
 }
 
-func (job *Job) RunsPath() string {
+func (job *Job) GetRunsPath() string {
 	return filepath.Join(job.Path(), "runs")
 }
 
-func (job *Job) Runs() ([]*JobRun, error) {
-	fileinfos, err := ioutil.ReadDir(job.RunsPath())
+func (job *Job) GetRuns() ([]*JobRun, error) {
+	fileinfos, err := ioutil.ReadDir(job.GetRunsPath())
 	if nil != err {
 		return nil, err
 	}
@@ -104,13 +171,13 @@ func (job *Job) Runs() ([]*JobRun, error) {
 
 	for _, fileinfo := range fileinfos {
 		if !fileinfo.IsDir() {
-			log.Printf("Found unexpected file in job runs directory: %s\n", filepath.Join(job.RunsPath(), fileinfo.Name()))
+			log.Printf("Found unexpected file in job runs directory: %s\n", filepath.Join(job.GetRunsPath(), fileinfo.Name()))
 			continue
 		}
 
 		jobRunId, err := strconv.Atoi(fileinfo.Name())
 		if nil != err {
-			log.Printf("Found unexpected folder in job runs directory: %s\n", filepath.Join(job.RunsPath(), fileinfo.Name()))
+			log.Printf("Found unexpected folder in job runs directory: %s\n", filepath.Join(job.GetRunsPath(), fileinfo.Name()))
 			continue
 		}
 
@@ -136,7 +203,9 @@ func (job *Job) Runs() ([]*JobRun, error) {
 func (job *Job) GetLastRunId() int {
 	numberOfRuns := 0
 
-	files, err := ioutil.ReadDir(job.RunsPath())
+	log.Printf("looking in %s\n", job.GetRunsPath())
+
+	files, err := ioutil.ReadDir(job.GetRunsPath())
 	if err != nil {
 		return numberOfRuns // todo err type checking
 	}
@@ -155,7 +224,7 @@ func (job *Job) GetLastRunId() int {
 }
 
 func (job *Job) GetRun(id int) (*JobRun, error) {
-	runDir := filepath.Join(job.RunsPath(), strconv.Itoa(id))
+	runDir := filepath.Join(job.GetRunsPath(), strconv.Itoa(id))
 
 	summaryFile := filepath.Join(runDir, "summary.json")
 	fileBytes, err := ioutil.ReadFile(summaryFile)
@@ -172,19 +241,4 @@ func (job *Job) GetRun(id int) (*JobRun, error) {
 	jobRun.Job = job
 
 	return jobRun, nil
-}
-
-func (job *Job) Save() error {
-	jobFolderPath := job.Path()
-	err := os.MkdirAll(jobFolderPath, 0700)
-	if nil != err {
-		return err
-	}
-
-	fileBytes, err := json.MarshalIndent(job, "", "	")
-	if nil != err {
-		return err
-	}
-
-	return ioutil.WriteFile(filepath.Join(jobFolderPath, "config.json"), fileBytes, 0600)
 }

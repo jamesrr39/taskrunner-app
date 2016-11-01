@@ -32,12 +32,12 @@ func main() {
 func setupApplicationFlags() {
 	taskrunnerDir := taskrunnerApplication.
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
-		Default("~/.taskrunner").
+		Default("~/.local/share/taskrunner").
 		String()
 
 	taskrunnerApplication.Action(func(context *kingpin.ParseContext) error {
 		var err error
-		taskrunnerInstance, err = taskrunner.NewTaskrunnerInstance(*taskrunnerDir)
+		taskrunnerInstance, err = taskrunner.NewTaskrunnerInstanceAndEnsurePaths(*taskrunnerDir)
 		return err
 	})
 }

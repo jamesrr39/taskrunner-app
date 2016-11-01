@@ -1,0 +1,62 @@
+package gui
+
+import (
+	"taskrunner"
+
+	"log"
+
+	"github.com/mattn/go-gtk/glib"
+	"github.com/mattn/go-gtk/gtk"
+)
+
+func (taskrunnerGUI *TaskrunnerGUI) RenderJobRuns(job *taskrunner.Job) {
+	box := gtk.NewVBox(false, 5)
+
+	box.PackStart(gtk.NewLabel("Runs for "+job.Name), false, false, 5)
+
+	hbox := gtk.NewHBox(true, 0)
+	runButton := gtk.NewButton()
+	runButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	runButton.Clicked(func(ctx *glib.CallbackContext) {
+		job, ok := ctx.Data().(*taskrunner.Job)
+		if !ok {
+			panic("couldn't convert to job")
+		}
+		go func(job *taskrunner.Job, taskrunnerGUI *TaskrunnerGUI) {
+			job.Run("GUI")
+		}(job, taskrunnerGUI)
+
+		taskrunnerGUI.RenderJobRuns(job)
+	}, job)
+
+	configureButton := gtk.NewButton()
+	configureButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_EDIT, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	configureButton.Clicked(func(ctx *glib.CallbackContext) {
+		job, ok := ctx.Data().(*taskrunner.Job)
+		if !ok {
+			panic("couldn't convert to job")
+		}
+		log.Printf("job for configure edit job view: %v\n", job)
+		taskrunnerGUI.renderNewContent(taskrunnerGUI.makeConfigureEditJobView(job))
+	}, job)
+
+	hbox.PackStart(runButton, false, false, 0)
+	hbox.PackEnd(configureButton, false, false, 0)
+	box.PackStart(hbox, false, false, 0)
+	var listing gtk.IWidget
+
+	if 0 == job.GetLastRunId() {
+		listing = gtk.NewLabel("No runs yet...")
+	} else {
+		table, err := taskrunnerGUI.buildJobRunsTable(job)
+		if nil != err {
+			listing = gtk.NewLabel("Error fetching job runs for " + job.Name + ". Error: " + err.Error())
+		} else {
+			listing = table
+		}
+	}
+	box.PackStart(listing, false, false, 5)
+
+	taskrunnerGUI.renderNewContent(box)
+
+}
