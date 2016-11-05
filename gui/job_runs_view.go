@@ -4,6 +4,8 @@ import (
 	"taskrunner"
 
 	"log"
+	"strconv"
+	"time"
 
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
@@ -59,4 +61,32 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRuns(job *taskrunner.Job) {
 
 	taskrunnerGUI.renderNewContent(box)
 
+}
+
+func (taskrunnerGUI *TaskrunnerGUI) buildJobRunsTable(job *taskrunner.Job) (*gtk.Table, error) {
+	runs, err := job.GetRuns()
+	if nil != err {
+		return nil, err
+	}
+	table := gtk.NewTable(3, uint(len(runs)), false)
+	for index, run := range runs {
+
+		runIdButton := gtk.NewButtonWithLabel("#" + strconv.Itoa(run.Id))
+		runIdButton.SetRelief(gtk.RELIEF_NONE)
+		runIdButton.Clicked(func(context *glib.CallbackContext) {
+			if run, ok := context.Data().(*taskrunner.JobRun); ok {
+				taskrunnerGUI.RenderJobRun(run)
+			} else {
+				errorMessage := "Couldn't get job clicked on"
+				taskrunnerGUI.renderNewContent(gtk.IWidget(gtk.NewLabel(errorMessage)))
+				log.Println(errorMessage)
+			}
+		}, run)
+		startDateTime := time.Unix(run.StartTimestamp, 0)
+
+		table.AttachDefaults(runIdButton, uint(1), 2, uint(index), uint(index+1))
+		table.AttachDefaults(gtk.NewLabel(startDateTime.String()), 2, 3, uint(index), uint(index+1))
+		table.AttachDefaults(gtk.NewLabel(run.State.String()), 3, 4, uint(index), uint(index+1))
+	}
+	return table, nil
 }
