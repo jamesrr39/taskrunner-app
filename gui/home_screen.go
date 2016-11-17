@@ -52,6 +52,7 @@ func (taskrunnerGUI *TaskrunnerGUI) buildJobsSummaryTable() (*gtk.Table, error) 
 		}
 
 		lastRun, err := job.GetRun(lastRunId)
+		// todo handle in progress
 		if nil != err {
 			table.AttachDefaults(gtk.NewLabel(err.Error()), 2, 5, uint(index), uint(index+1))
 		} else {

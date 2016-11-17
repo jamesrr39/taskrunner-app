@@ -7,6 +7,10 @@ import (
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gtk"
+
+	"github.com/mattn/go-gtk/glib"
+
+	"github.com/mattn/go-gtk/gdk"
 )
 
 var (
@@ -20,6 +24,9 @@ func main() {
 	setupApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
 
+	glib.ThreadInit(nil)
+	gdk.ThreadsInit()
+	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
 	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerInstance)

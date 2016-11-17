@@ -27,6 +27,9 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRuns(job *taskrunner.Job) {
 		}
 		go func(job *taskrunner.Job, taskrunnerGUI *TaskrunnerGUI) {
 			job.Run("GUI")
+			gdk.ThreadsEnter()
+			taskrunnerGUI.RenderJobRuns(job) // todo check still on this screen interface CurrentSceneRendered
+			gdk.ThreadsLeave()
 		}(job, taskrunnerGUI)
 
 		taskrunnerGUI.RenderJobRuns(job)
