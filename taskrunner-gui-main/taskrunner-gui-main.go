@@ -30,7 +30,7 @@ func main() {
 	gtk.Init(nil)
 
 	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerInstance)
-	taskrunnerGUI.RenderHomeScreen()
+	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
 

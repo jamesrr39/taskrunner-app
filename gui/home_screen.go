@@ -9,13 +9,30 @@ import (
 	"github.com/mattn/go-gtk/gtk"
 )
 
-func (taskrunnerGUI *TaskrunnerGUI) RenderHomeScreen() {
+type HomeScene struct {
+	*TaskrunnerGUI
+}
+
+func (taskrunner *TaskrunnerGUI) NewHomeScene() *HomeScene {
+	return &HomeScene{taskrunner}
+}
+
+func (homeScreen *HomeScene) IsCurrentlyRendered() bool {
+	switch homeScreen.TaskrunnerGUI.PaneContent.(type) {
+	case *HomeScene:
+		return true
+	default:
+		return false
+	}
+}
+
+func (homeScreen *HomeScene) Content() gtk.IWidget {
 	box := gtk.NewVBox(false, 0)
 	var jobsTableWidget gtk.IWidget
 
-	titleLabel := gtk.IWidget(gtk.NewLabel("Taskrunner (" + taskrunnerGUI.TaskrunnerInstance.Basepath + ")"))
+	titleLabel := gtk.IWidget(gtk.NewLabel("Taskrunner (" + homeScreen.TaskrunnerGUI.TaskrunnerInstance.Basepath + ")"))
 	box.PackStart(titleLabel, false, true, 5)
-	jobsTable, err := taskrunnerGUI.buildJobsSummaryTable()
+	jobsTable, err := homeScreen.buildJobsSummaryTable()
 	if nil != err {
 		jobsTableWidget = gtk.NewLabel(err.Error())
 	} else {
@@ -23,11 +40,11 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderHomeScreen() {
 	}
 	box.PackStart(jobsTableWidget, false, false, 5)
 
-	taskrunnerGUI.renderNewContent(box)
+	return box
 }
 
-func (taskrunnerGUI *TaskrunnerGUI) buildJobsSummaryTable() (*gtk.Table, error) {
-	jobs, err := taskrunnerGUI.TaskrunnerInstance.GetAllJobs()
+func (homeScreen *HomeScene) buildJobsSummaryTable() (*gtk.Table, error) {
+	jobs, err := homeScreen.TaskrunnerGUI.TaskrunnerInstance.GetAllJobs()
 	if nil != err {
 		return nil, err
 	}
@@ -40,7 +57,7 @@ func (taskrunnerGUI *TaskrunnerGUI) buildJobsSummaryTable() (*gtk.Table, error) 
 			if !ok {
 				panic("casting job didn't work")
 			}
-			taskrunnerGUI.RenderJobRuns(job)
+			homeScreen.TaskrunnerGUI.RenderScene(homeScreen.TaskrunnerGUI.NewJobScene(job))
 		}, job)
 
 		table.AttachDefaults(jobNameLabel, 1, 2, uint(index), uint(index+1))

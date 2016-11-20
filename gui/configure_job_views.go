@@ -1,20 +1,37 @@
 package gui
 
 import (
-	"log"
 	"taskrunner"
 
-	"github.com/mattn/go-gtk/gdk"
+	//	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
 )
 
-func (taskrunnerGUI *TaskrunnerGUI) makeConfigureEditJobView(job *taskrunner.Job) gtk.IWidget {
+type EditJobView struct {
+	*TaskrunnerGUI
+	Job *taskrunner.Job
+}
+
+func (taskrunnerGUI *TaskrunnerGUI) NewEditJobView(job *taskrunner.Job) *EditJobView {
+	return &EditJobView{taskrunnerGUI, job}
+}
+
+func (editJobView *EditJobView) IsCurrentlyRendered() bool {
+	switch editJobView.TaskrunnerGUI.PaneContent.(type) {
+	case *EditJobView:
+		return true
+	default:
+		return false
+	}
+}
+
+func (editJobView *EditJobView) Content() gtk.IWidget {
 	vbox := gtk.NewVBox(false, 0)
-	vbox.PackStart(gtk.NewLabel("Editing :: "+job.Name), false, false, 0)
+	vbox.PackStart(gtk.NewLabel("Editing :: "+editJobView.Job.Name), false, false, 0)
 
 	// editing table
-	editJobTableEntries := taskrunnerGUI.NewConfigureJobTableEntries(job)
+	editJobTableEntries := editJobView.TaskrunnerGUI.NewConfigureJobTableEntries(editJobView.Job)
 	vbox.PackStart(editJobTableEntries.ToTable(), false, false, 0)
 
 	createButton := gtk.NewButtonWithLabel("Save!")
@@ -37,7 +54,7 @@ func (taskrunnerGUI *TaskrunnerGUI) makeConfigureEditJobView(job *taskrunner.Job
 			entries.ValidationLabel.ShowAll()
 			return
 		}
-		entries.TaskrunnerGUI.RenderJobRuns(job)
+		entries.TaskrunnerGUI.RenderScene(entries.TaskrunnerGUI.NewJobScene(job))
 
 	}, editJobTableEntries)
 	vbox.PackEnd(createButton, false, false, 0)
@@ -45,6 +62,7 @@ func (taskrunnerGUI *TaskrunnerGUI) makeConfigureEditJobView(job *taskrunner.Job
 	return vbox
 }
 
+/*
 func (taskrunnerGUI *TaskrunnerGUI) makeConfigureCreateJobView() gtk.IWidget {
 	vbox := gtk.NewVBox(false, 0)
 	vbox.PackStart(gtk.NewLabel("New Job Setup"), false, false, 0)
@@ -77,7 +95,7 @@ func (taskrunnerGUI *TaskrunnerGUI) makeConfigureCreateJobView() gtk.IWidget {
 			entries.ValidationLabel.ShowAll()
 			return
 		}
-		entries.TaskrunnerGUI.RenderJobRuns(job)
+		entries.TaskrunnerGUI.RenderScene(entries.TaskrunnerGUI.NewJobScene(job))
 
 	}, createJobTableEntries)
 
@@ -87,3 +105,4 @@ func (taskrunnerGUI *TaskrunnerGUI) makeConfigureCreateJobView() gtk.IWidget {
 	return vbox
 
 }
+*/

@@ -10,7 +10,25 @@ import (
 	"github.com/mattn/go-gtk/gtk"
 )
 
-func (taskrunnerGUI *TaskrunnerGUI) RenderJobRun(jobRun *taskrunner.JobRun) {
+type JobRunScene struct {
+	*TaskrunnerGUI
+	jobRun *taskrunner.JobRun
+}
+
+func (taskrunnerGUI *TaskrunnerGUI) NewJobRunScene(jobRun *taskrunner.JobRun) *JobRunScene {
+	return &JobRunScene{taskrunnerGUI, jobRun}
+}
+
+func (jobRunScene *JobRunScene) IsCurrentlyRendered() bool {
+	paneContentJobRunScene, ok := jobRunScene.TaskrunnerGUI.PaneContent.(*JobRunScene)
+	if ok && paneContentJobRunScene.jobRun.Job.Id == jobRunScene.jobRun.Job.Id {
+		return true
+	}
+	return false
+}
+
+func (jobRunScene *JobRunScene) Content() gtk.IWidget {
+	jobRun := jobRunScene.jobRun
 
 	isFinished := (jobRun.EndTimestamp != 0)
 
@@ -52,6 +70,6 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderJobRun(jobRun *taskrunner.JobRun) {
 	vbox.PackStart(gtk.IWidget(logTextareaScrollWindow), true, true, 0)
 
 	var container gtk.IWidget = vbox
-	taskrunnerGUI.renderNewContent(container)
+	return container
 
 }

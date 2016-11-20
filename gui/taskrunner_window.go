@@ -9,10 +9,17 @@ import (
 )
 
 type TaskrunnerGUI struct {
-	mainFrame          gtk.IBox
-	PaneContent        gtk.IWidget
-	Window             *gtk.Window
-	TaskrunnerInstance *taskrunner.TaskrunnerInstance
+	mainFrame           gtk.IBox
+	PaneContent         Scene
+	paneWidget          gtk.IWidget
+	Window              *gtk.Window
+	TaskrunnerInstance  *taskrunner.TaskrunnerInstance
+	JobStatusChangeChan chan *taskrunner.JobRun
+}
+
+type Scene interface {
+	Content() gtk.IWidget
+	IsCurrentlyRendered() bool
 }
 
 func NewTaskrunnerGUI(taskrunnerInstance *taskrunner.TaskrunnerInstance) *TaskrunnerGUI {
@@ -30,10 +37,10 @@ func NewTaskrunnerGUI(taskrunnerInstance *taskrunner.TaskrunnerInstance) *Taskru
 	paneContent := gtk.NewVBox(false, 0)
 
 	taskrunnerGUI := &TaskrunnerGUI{
-		mainFrame:          gtk.IBox(mainFrame),
-		PaneContent:        gtk.IWidget(paneContent),
-		Window:             window,
-		TaskrunnerInstance: taskrunnerInstance,
+		mainFrame:           gtk.IBox(mainFrame),
+		Window:              window,
+		TaskrunnerInstance:  taskrunnerInstance,
+		JobStatusChangeChan: make(chan *taskrunner.JobRun),
 	}
 
 	mainFrame.PackStart(taskrunnerGUI.buildToolbar(), false, false, 0)
@@ -46,12 +53,19 @@ func NewTaskrunnerGUI(taskrunnerInstance *taskrunner.TaskrunnerInstance) *Taskru
 func (taskrunnerGUI *TaskrunnerGUI) buildToolbar() gtk.IWidget {
 	homeButton := gtk.NewButton()
 	homeButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_HOME, gtk.IconSize(gtk.ICON_SIZE_LARGE_TOOLBAR)))
-	homeButton.Clicked(taskrunnerGUI.RenderHomeScreen)
+	homeButton.Clicked(func() {
+		taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
+	})
 
 	newJobButton := gtk.NewButton()
 	newJobButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_ADD, gtk.IconSize(gtk.ICON_SIZE_LARGE_TOOLBAR)))
 	newJobButton.Clicked(func() {
-		taskrunnerGUI.renderNewContent(taskrunnerGUI.makeConfigureCreateJobView())
+		newJob, err := taskrunner.NewJob("New Job", "", taskrunner.Script("#!/bin/bash\n\n"), taskrunnerGUI.TaskrunnerInstance)
+		if nil != err {
+			panic(err)
+		}
+		taskrunnerGUI.RenderScene(taskrunnerGUI.NewEditJobView(newJob))
+
 	})
 
 	hbox := gtk.NewHBox(true, 0)
@@ -66,11 +80,13 @@ func (taskrunnerGUI *TaskrunnerGUI) buildToolbar() gtk.IWidget {
 	return eventBox
 }
 
-func (taskrunnerGUI *TaskrunnerGUI) renderNewContent(content gtk.IWidget) {
-
-	taskrunnerGUI.PaneContent.Destroy()
-	taskrunnerGUI.PaneContent = content
-	taskrunnerGUI.mainFrame.Add(taskrunnerGUI.PaneContent)
+func (taskrunnerGUI *TaskrunnerGUI) RenderScene(scene Scene) {
+	if nil != taskrunnerGUI.paneWidget {
+		taskrunnerGUI.paneWidget.Destroy()
+	}
+	taskrunnerGUI.PaneContent = scene
+	taskrunnerGUI.paneWidget = scene.Content()
+	taskrunnerGUI.mainFrame.Add(taskrunnerGUI.paneWidget)
 
 	taskrunnerGUI.Window.ShowAll()
 }
