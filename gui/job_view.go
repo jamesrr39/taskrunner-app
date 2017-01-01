@@ -3,7 +3,6 @@ package gui
 import (
 	"taskrunner"
 
-	"log"
 	"strconv"
 	"time"
 
@@ -29,11 +28,13 @@ func (jobScene *JobScene) IsCurrentlyRendered() bool {
 	return false
 }
 
+func (jobScene *JobScene) Title() string {
+	return "Runs for " + jobScene.Job.Name
+}
+
 func (jobScene *JobScene) Content() gtk.IWidget {
 
 	box := gtk.NewVBox(false, 5)
-
-	box.PackStart(gtk.NewLabel("Runs for "+jobScene.Job.Name), false, false, 5)
 
 	hbox := gtk.NewHBox(true, 0)
 	runButton := gtk.NewButton()
@@ -58,14 +59,13 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	configureButton := gtk.NewButton()
 	configureButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_EDIT, gtk.ICON_SIZE_LARGE_TOOLBAR))
 	configureButton.Clicked(func(ctx *glib.CallbackContext) {
-		job, ok := ctx.Data().(*taskrunner.Job)
+		jobScene, ok := ctx.Data().(*JobScene)
 		if !ok {
 			panic("couldn't convert to job")
 		}
-		log.Printf("job for configure edit job view: %v\n", job)
 
-		//jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.makeConfigureEditJobView(job))
-	}, jobScene.Job)
+		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewEditJobView(jobScene.Job))
+	}, jobScene)
 
 	hbox.PackStart(runButton, false, false, 0)
 	hbox.PackEnd(configureButton, false, false, 0)
@@ -79,21 +79,24 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 		if nil != err {
 			listing = gtk.NewLabel("Error fetching job runs for " + jobScene.Job.Name + ". Error: " + err.Error())
 		} else {
-			listing = table
+			swin := gtk.NewScrolledWindow(nil, nil)
+			swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+			swin.SetShadowType(gtk.SHADOW_IN)
+			swin.Add(table)
+			listing = swin
 		}
 	}
-	box.PackStart(listing, false, false, 5)
+	box.PackStart(listing, true, true, 5)
 
 	go func(renderedJob *taskrunner.Job) {
 		jobRun := <-jobScene.TaskrunnerGUI.JobStatusChangeChan
-		if renderedJob.Id == jobRun.Job.Id {
-			log.Println("listing in channel")
-			gdk.ThreadsEnter()
-			jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(renderedJob)) // todo check still on this screen interface CurrentSceneRendered
-			gdk.ThreadsLeave()
-		} else {
-			log.Println("SKIPPING job re-render ------------")
+		if renderedJob.Id != jobRun.Job.Id {
+			return // skip
 		}
+		gdk.ThreadsEnter()
+		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(renderedJob)) // todo check still on this screen interface CurrentSceneRendered
+		gdk.ThreadsLeave()
+
 	}(jobScene.Job)
 
 	return box
@@ -111,8 +114,8 @@ func (taskrunnerGUI *TaskrunnerGUI) buildJobRunsTable(job *taskrunner.Job) (gtk.
 		runIdButton := gtk.NewButtonWithLabel("#" + strconv.Itoa(run.Id))
 		runIdButton.SetRelief(gtk.RELIEF_NONE)
 		runIdButton.Clicked(func(context *glib.CallbackContext) {
-			if _, ok := context.Data().(*taskrunner.JobRun); ok {
-				taskrunnerGUI.RenderScene(taskrunnerGUI.NewJobScene(job))
+			if jobRun, ok := context.Data().(*taskrunner.JobRun); ok {
+				taskrunnerGUI.RenderScene(taskrunnerGUI.NewJobRunScene(jobRun))
 			} else {
 				panic("couldn't cast job")
 			}
@@ -123,5 +126,7 @@ func (taskrunnerGUI *TaskrunnerGUI) buildJobRunsTable(job *taskrunner.Job) (gtk.
 		table.AttachDefaults(gtk.NewLabel(startDateTime.String()), 2, 3, uint(index), uint(index+1))
 		table.AttachDefaults(gtk.NewLabel(run.State.String()), 3, 4, uint(index), uint(index+1))
 	}
-	return table, nil
+	swin := gtk.NewViewport(nil, nil)
+	swin.Add(table)
+	return swin, nil
 }

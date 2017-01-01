@@ -27,13 +27,16 @@ func (jobRunScene *JobRunScene) IsCurrentlyRendered() bool {
 	return false
 }
 
+func (jobRunScene *JobRunScene) Title() string {
+	return "#" + strconv.Itoa(jobRunScene.jobRun.Id) + " :: " + jobRunScene.jobRun.Job.Name
+}
+
 func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	jobRun := jobRunScene.jobRun
 
 	isFinished := (jobRun.EndTimestamp != 0)
 
 	vbox := gtk.NewVBox(false, 5)
-	vbox.PackStart(gtk.IWidget(gtk.NewLabel("#"+strconv.Itoa(jobRun.Id)+" :: "+jobRun.Job.Name)), false, false, 0)
 
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
 	vbox.PackStart(gtk.IWidget(gtk.NewLabel("Started: "+startDateTime.String())), false, false, 0)
@@ -56,6 +59,7 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	logTextareaScrollWindow.SetShadowType(gtk.SHADOW_IN)
 
 	logTextarea := gtk.NewTextView()
+	logTextarea.SetEditable(false)
 	logTextBuffer := logTextarea.GetBuffer()
 	logFile, err := os.Open(jobRun.LogFilePath())
 	if nil != err {

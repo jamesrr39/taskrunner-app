@@ -15,9 +15,11 @@ type TaskrunnerGUI struct {
 	Window              *gtk.Window
 	TaskrunnerInstance  *taskrunner.TaskrunnerInstance
 	JobStatusChangeChan chan *taskrunner.JobRun
+	titleLabel          *gtk.Label
 }
 
 type Scene interface {
+	Title() string
 	Content() gtk.IWidget
 	IsCurrentlyRendered() bool
 }
@@ -32,19 +34,20 @@ func NewTaskrunnerGUI(taskrunnerInstance *taskrunner.TaskrunnerInstance) *Taskru
 	window.SetTitle("Taskrunner (" + taskrunnerInstance.Basepath + ")")
 	window.ModifyBG(gtk.STATE_NORMAL, gdk.NewColor("white"))
 
-	mainFrame := gtk.NewVBox(false, 0)
+	mainFrame := gtk.NewVBox(false, 10)
 
-	paneContent := gtk.NewVBox(false, 0)
+	titleLabel := gtk.NewLabel("")
+	titleLabel.ModifyFG(gtk.STATE_NORMAL, gdk.NewColor("white"))
 
 	taskrunnerGUI := &TaskrunnerGUI{
 		mainFrame:           gtk.IBox(mainFrame),
 		Window:              window,
 		TaskrunnerInstance:  taskrunnerInstance,
 		JobStatusChangeChan: make(chan *taskrunner.JobRun),
+		titleLabel:          titleLabel,
 	}
 
 	mainFrame.PackStart(taskrunnerGUI.buildToolbar(), false, false, 0)
-	mainFrame.PackStart(gtk.IWidget(paneContent), true, true, 0)
 	window.Add(mainFrame)
 
 	return taskrunnerGUI
@@ -68,14 +71,14 @@ func (taskrunnerGUI *TaskrunnerGUI) buildToolbar() gtk.IWidget {
 
 	})
 
-	hbox := gtk.NewHBox(true, 0)
-
-	hbox.PackStart(homeButton, false, false, 0)
-	hbox.PackStart(newJobButton, false, false, 0)
+	hbox := gtk.NewHBox(false, 0)
+	hbox.PackStart(taskrunnerGUI.titleLabel, true, true, 3)
+	hbox.PackEnd(homeButton, false, false, 0)
+	hbox.PackEnd(newJobButton, false, false, 0)
 
 	eventBox := gtk.NewEventBox()
 	eventBox.Add(hbox)
-	eventBox.ModifyBG(gtk.STATE_NORMAL, gdk.NewColorRGB(uint8(223), uint8(223), uint8(223)))
+	eventBox.ModifyBG(gtk.STATE_NORMAL, titleBlue())
 
 	return eventBox
 }
@@ -85,7 +88,11 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderScene(scene Scene) {
 		taskrunnerGUI.paneWidget.Destroy()
 	}
 	taskrunnerGUI.PaneContent = scene
+
+	taskrunnerGUI.titleLabel.SetText(scene.Title())
+
 	taskrunnerGUI.paneWidget = scene.Content()
+
 	taskrunnerGUI.mainFrame.Add(taskrunnerGUI.paneWidget)
 
 	taskrunnerGUI.Window.ShowAll()

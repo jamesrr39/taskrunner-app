@@ -26,19 +26,22 @@ func (homeScreen *HomeScene) IsCurrentlyRendered() bool {
 	}
 }
 
+func (homeScreen *HomeScene) Title() string {
+	return "Taskrunner"
+}
+
 func (homeScreen *HomeScene) Content() gtk.IWidget {
 	box := gtk.NewVBox(false, 0)
 	var jobsTableWidget gtk.IWidget
 
-	titleLabel := gtk.IWidget(gtk.NewLabel("Taskrunner (" + homeScreen.TaskrunnerGUI.TaskrunnerInstance.Basepath + ")"))
-	box.PackStart(titleLabel, false, true, 5)
 	jobsTable, err := homeScreen.buildJobsSummaryTable()
 	if nil != err {
 		jobsTableWidget = gtk.NewLabel(err.Error())
 	} else {
 		jobsTableWidget = jobsTable
 	}
-	box.PackStart(jobsTableWidget, false, false, 5)
+	//box.PackStart(jobsTableWidget, true, true, 5)
+	box.Add(jobsTableWidget)
 
 	return box
 }
