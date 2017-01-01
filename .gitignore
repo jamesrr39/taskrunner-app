@@ -1,5 +1,6 @@
 # liteide
 /gui/gui
-taskrunner-gui-main/taskrunner-gui-main
+/cli/cli
+/taskrunner-gui-main/taskrunner-gui-main
 
 res/testconfig/jobs/test_job/runs

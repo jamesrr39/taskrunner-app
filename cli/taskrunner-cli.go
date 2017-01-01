@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"taskrunner"
 	"time"
@@ -36,7 +35,7 @@ func setupApplicationFlags() {
 
 	taskrunnerApplication.Action(func(context *kingpin.ParseContext) error {
 		var err error
-		taskrunnerInstance, err = taskrunner.NewTaskrunnerInstance(*taskrunnerDir)
+		taskrunnerInstance, err = taskrunner.NewTaskrunnerInstanceAndEnsurePaths(*taskrunnerDir)
 		return err
 	})
 }
@@ -44,7 +43,7 @@ func setupApplicationFlags() {
 func setupListJobsCommand() {
 	listJobCommand := taskrunnerApplication.Command("list-jobs", "List all jobs")
 	listJobCommand.Action(func(context *kingpin.ParseContext) error {
-		jobs, err := taskrunnerInstance.Jobs()
+		jobs, err := taskrunnerInstance.GetAllJobs()
 		if nil != err {
 			return fmt.Errorf("Error listing all jobs. Error: %s", err)
 		}
@@ -71,7 +70,7 @@ func setupRunJobCommand() {
 	runJobCommand := taskrunnerApplication.Command("run-job", "Run a job")
 	jobName := addJobNameToCommandArgs(runJobCommand)
 	runJobCommand.Action(func(context *kingpin.ParseContext) error {
-		err := runJob(*jobName)
+		_, err := runJob(*jobName)
 		return err
 	})
 }
@@ -90,41 +89,32 @@ func addJobNameToCommandArgs(cmdClause *kingpin.CmdClause) *string {
 	return cmdClause.Arg("Job_Name", "Name of the job to be run").Required().String()
 }
 
-func runJob(jobName string) error {
-	job, err := taskrunnerInstance.JobFromName(jobName)
+func runJob(jobName string) (*taskrunner.JobRun, error) {
+	job, err := taskrunnerInstance.GetJobByName(jobName)
 	if nil != err {
-		return err
+		return nil, err
 	}
 
-	err = job.Run("CLI")
-	return err
+	return job.Run("CLI")
 }
 
 func printJobConfig(jobName string) error {
-	job, err := taskrunnerInstance.JobFromName(jobName)
+	job, err := taskrunnerInstance.GetJobByName(jobName)
 	if nil != err {
 		return fmt.Errorf("Error getting job '%s'. Error: %s\n", jobName, err)
 	}
-	fmt.Printf("Name: %s\nDescription: %s\n", job.Name, job.Description)
-	if 0 == len(job.Steps) {
-		fmt.Println("No steps in this job")
-		return nil
-	}
+	fmt.Printf("Name: %s\nDescription: %s\nScript:=====\n%s\n=====\n", job.Name, job.Description, job.Script)
 
-	fmt.Println("Steps:")
-	for index, step := range job.Steps {
-		fmt.Printf("Step %d, %s:\n> %s\n", index+1, step.Name, step.Cmd)
-	}
 	return nil
 }
 
 func printJobHistory(jobName string) error {
-	job, err := taskrunnerInstance.JobFromName(jobName)
+	job, err := taskrunnerInstance.GetJobByName(jobName)
 	if nil != err {
 		return fmt.Errorf("Error getting job '%s'. Error: %s\n", jobName, err)
 	}
 
-	jobRuns, err := job.Runs()
+	jobRuns, err := job.GetRuns()
 	if nil != err {
 		fmt.Printf("Error getting job runs for job '%s'. Error: %s\n", jobName, err)
 		return nil
@@ -132,7 +122,7 @@ func printJobHistory(jobName string) error {
 
 	for _, jobRun := range jobRuns {
 		lastRunTime := time.Unix(jobRun.StartTimestamp, 0)
-		fmt.Printf("#%d: %s: %t\n", jobRun.Id, lastRunTime.Format(time.RFC1123), jobRun.Successful)
+		fmt.Printf("#%d: %s: %s\n", jobRun.Id, lastRunTime.Format(time.RFC1123), jobRun.State)
 	}
 	return nil
 
@@ -147,12 +137,11 @@ func getLastRunSummary(job *taskrunner.Job) string {
 	jobRun, err := job.GetRun(lastRunId)
 
 	if nil != err {
-		log.Printf("Error decoding last job run for job %s. Error: %s\n", job.Name, err)
-		return fmt.Sprintf("Error decoding last job run for job %s.", job.Name)
+		return fmt.Sprintf("Couldn't decode last job run for job %s. Error: %s", job.Name, err)
 	}
 
 	lastRunTime := time.Unix(jobRun.StartTimestamp, 0)
 
-	return fmt.Sprintf("#%d: %s: %t", lastRunId, lastRunTime.Format(time.RFC1123), jobRun.Successful)
+	return fmt.Sprintf("#%d: %s: %s", lastRunId, lastRunTime.Format(time.RFC1123), jobRun.State)
 
 }

@@ -54,3 +54,19 @@ func (t *TaskrunnerInstance) ensureDirectories() error {
 	err := os.MkdirAll(t.jobsDir(), 0700)
 	return err
 }
+
+func (t *TaskrunnerInstance) GetJobByName(name string) (*Job, error) {
+	// todo optimisation?
+	allJobs, err := t.GetAllJobs()
+	if nil != err {
+		return nil, err
+	}
+
+	for _, job := range allJobs {
+		if job.Name == name {
+			return job, nil
+		}
+	}
+
+	return nil, &ErrJobNotFound{}
+}
