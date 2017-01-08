@@ -1,4 +1,4 @@
-package: .
+package: taskrunner
 import:
 - package: github.com/alecthomas/kingpin
   version: v2.2.3
@@ -13,4 +13,3 @@ import:
   - gdk
   - glib
   - gtk
-- package: taskrunner

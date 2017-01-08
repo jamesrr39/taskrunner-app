@@ -5,5 +5,5 @@ import (
 )
 
 func titleBlue() *gdk.Color {
-	return gdk.NewColorRGB(uint8(66), uint8(80), uint8(244))
+	return gdk.NewColorRGB(uint16(66), uint16(80), uint16(244))
 }
