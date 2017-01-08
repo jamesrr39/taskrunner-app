@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"taskrunner"
+	"taskrunner-app/taskrunner"
 	"time"
 
 	"github.com/alecthomas/kingpin"

@@ -1,7 +1,7 @@
 package gui
 
 import (
-	"taskrunner"
+	"taskrunner-app/taskrunner"
 
 	"strconv"
 	"time"

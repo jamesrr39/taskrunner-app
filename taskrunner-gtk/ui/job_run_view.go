@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"taskrunner"
+	"taskrunner-app/taskrunner"
 	"time"
 
 	"github.com/mattn/go-gtk/gtk"

@@ -2,8 +2,8 @@ package main
 
 import (
 	"os"
-	"taskrunner"
-	"taskrunner/gui"
+	"taskrunner-app/taskrunner"
+	"taskrunner-app/taskrunner-gtk/ui"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gtk"
