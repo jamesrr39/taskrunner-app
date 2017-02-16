@@ -38,10 +38,19 @@ func (homeScreen *HomeScene) Content() gtk.IWidget {
 	if nil != err {
 		jobsTableWidget = gtk.NewLabel(err.Error())
 	} else {
-		jobsTableWidget = jobsTable
+		swin := gtk.NewScrolledWindow(nil, nil)
+		swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+		swin.SetShadowType(gtk.SHADOW_IN)
+
+		innerVbox := gtk.NewVBox(false, 0)
+		innerVbox.PackStart(jobsTable, false, false, 0)
+		swin.AddWithViewPort(innerVbox)
+
+		jobsTableWidget = swin
+
 	}
-	//box.PackStart(jobsTableWidget, true, true, 5)
-	box.PackStart(jobsTableWidget, false, false, 0)
+
+	box.PackStart(jobsTableWidget, true, true, 0)
 
 	return box
 }
