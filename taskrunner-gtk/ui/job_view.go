@@ -84,9 +84,13 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 			swin := gtk.NewScrolledWindow(nil, nil)
 			swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 			swin.SetShadowType(gtk.SHADOW_IN)
-			swin.AddWithViewPort(table)
+
+			innerVbox := gtk.NewVBox(false, 0)
+			innerVbox.PackStart(table, false, false, 0)
+			swin.AddWithViewPort(innerVbox)
 
 			listing = swin
+
 		}
 	}
 	box.PackStart(listing, true, true, 5)
