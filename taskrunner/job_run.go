@@ -39,10 +39,11 @@ type JobRun struct {
 	Trigger        TriggerType `json:"trigger"`
 	Job            *Job        `json:"-"`
 	Pid            int         `json:"pid"`
+	ExitCode       int         `json:"exitCode"`
 }
 
-func (job *Job) NewJobRun(id int, state JobRunState, startTimestamp int64, endTimestamp int64, trigger TriggerType, pid int) *JobRun {
-	return &JobRun{Id: id, State: state, StartTimestamp: startTimestamp, EndTimestamp: endTimestamp, Trigger: trigger, Job: job, Pid: pid}
+func (job *Job) NewJobRun(id int, state JobRunState, startTimestamp int64, endTimestamp int64, trigger TriggerType, pid int, exitCode int) *JobRun {
+	return &JobRun{Id: id, State: state, StartTimestamp: startTimestamp, EndTimestamp: endTimestamp, Trigger: trigger, Job: job, Pid: pid, ExitCode: exitCode}
 }
 
 func (jobRun *JobRun) WriteToDisk() error {

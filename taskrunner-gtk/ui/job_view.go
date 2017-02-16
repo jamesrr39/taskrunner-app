@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"log"
 	"taskrunner-app/taskrunner"
 
 	"strconv"
@@ -79,10 +80,12 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 		if nil != err {
 			listing = gtk.NewLabel("Error fetching job runs for " + jobScene.Job.Name + ". Error: " + err.Error())
 		} else {
+
 			swin := gtk.NewScrolledWindow(nil, nil)
 			swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 			swin.SetShadowType(gtk.SHADOW_IN)
-			swin.Add(table)
+			swin.AddWithViewPort(table)
+
 			listing = swin
 		}
 	}
@@ -90,6 +93,7 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 
 	go func(renderedJob *taskrunner.Job) {
 		jobRun := <-jobScene.TaskrunnerGUI.JobStatusChangeChan
+		log.Printf("catching job run id: %d. Current job id: %d\n", jobRun.Job.Id, renderedJob.Id)
 		if renderedJob.Id != jobRun.Job.Id {
 			return // skip
 		}

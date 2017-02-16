@@ -41,7 +41,7 @@ func (homeScreen *HomeScene) Content() gtk.IWidget {
 		jobsTableWidget = jobsTable
 	}
 	//box.PackStart(jobsTableWidget, true, true, 5)
-	box.Add(jobsTableWidget)
+	box.PackStart(jobsTableWidget, false, false, 0)
 
 	return box
 }
@@ -76,7 +76,7 @@ func (homeScreen *HomeScene) buildJobsSummaryTable() (*gtk.Table, error) {
 		if nil != err {
 			table.AttachDefaults(gtk.NewLabel(err.Error()), 2, 5, uint(index), uint(index+1))
 		} else {
-			endDateTime := time.Unix(int64(lastRun.EndTimestamp), 0)
+			endDateTime := time.Unix(lastRun.EndTimestamp, 0)
 			table.AttachDefaults(gtk.NewLabel("#"+strconv.Itoa(lastRunId)), 2, 3, uint(index), uint(index+1))
 			table.AttachDefaults(gtk.NewLabel(GetTimeAgo(endDateTime)), 3, 4, uint(index), uint(index+1))
 			table.AttachDefaults(gtk.NewLabel(lastRun.State.String()), 4, 5, uint(index), uint(index+1))

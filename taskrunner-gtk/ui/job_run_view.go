@@ -39,7 +39,8 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	vbox := gtk.NewVBox(false, 5)
 
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
-	vbox.PackStart(gtk.IWidget(gtk.NewLabel("Started: "+startDateTime.String())), false, false, 0)
+
+	vbox.PackStart(gtk.IWidget(gtk.NewLabel("Started: "+startDateTime.String()+" ("+GetTimeAgo(startDateTime)+")")), false, false, 0)
 
 	var durationStr string
 	if !isFinished {
@@ -58,6 +59,17 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	logTextareaScrollWindow.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 	logTextareaScrollWindow.SetShadowType(gtk.SHADOW_IN)
 
+	logTextarea := makeTextarea(jobRun)
+	logTextareaScrollWindow.Add(logTextarea)
+
+	vbox.PackStart(gtk.NewLabel("Console Output:"), false, false, 0)
+	vbox.PackStart(gtk.IWidget(logTextareaScrollWindow), false, true, 0)
+
+	return gtk.IWidget(vbox)
+
+}
+
+func makeTextarea(jobRun *taskrunner.JobRun) *gtk.TextView {
 	logTextarea := gtk.NewTextView()
 	logTextarea.SetEditable(false)
 	logTextBuffer := logTextarea.GetBuffer()
@@ -69,11 +81,5 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 		defer logFile.Close()
 		fillTextBufferFromFile(logTextBuffer, logFile, 200) //todo
 	}
-
-	logTextareaScrollWindow.Add(logTextarea)
-	vbox.PackStart(gtk.IWidget(logTextareaScrollWindow), true, true, 0)
-
-	var container gtk.IWidget = vbox
-	return container
-
+	return logTextarea
 }

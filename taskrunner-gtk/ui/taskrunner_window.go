@@ -27,11 +27,11 @@ type Scene interface {
 func NewTaskrunnerGUI(taskrunnerInstance *taskrunner.TaskrunnerInstance) *TaskrunnerGUI {
 
 	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
-	window.SetSizeRequest(400, 400)
+	window.SetSizeRequest(800, 600)
 	window.Connect("destroy", func(ctx *glib.CallbackContext) {
 		gtk.MainQuit()
 	})
-	window.SetTitle("Taskrunner (" + taskrunnerInstance.Basepath + ")")
+	window.SetTitle("(Alpha) :: Taskrunner (" + taskrunnerInstance.Basepath + ")")
 	window.ModifyBG(gtk.STATE_NORMAL, gdk.NewColor("white"))
 
 	mainFrame := gtk.NewVBox(false, 10)
