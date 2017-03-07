@@ -75,7 +75,7 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	vbox.PackStart(gtk.NewLabel(jobRun.State.String()), false, false, 0)
 
 	vbox.PackStart(gtk.NewLabel("Console Output:"), false, false, 0)
-	vbox.PackStart(jobRunScene.buildTextareaScrollWindow(jobRun), false, true, 0)
+	vbox.PackStart(jobRunScene.buildTextareaScrollWindow(jobRun), true, true, 0)
 
 	return vbox
 
