@@ -13,7 +13,8 @@ func fillTextBufferFromFile(textBuffer *gtk.TextBuffer, fileReader io.Reader, li
 	fileScanner := bufio.NewScanner(fileReader)
 	linesRead := uint(0)
 	for fileScanner.Scan() && linesRead < linesToRead {
-		textBuffer.InsertAtCursor(fileScanner.Text())
+		text := fileScanner.Text()
+		textBuffer.InsertAtCursor(text + "\n")
 		linesRead++
 	}
 }

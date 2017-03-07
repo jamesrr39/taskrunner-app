@@ -63,7 +63,14 @@ func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStat
 	if nil != err {
 		return err
 	}
-	defer logFile.Close()
+	defer func() {
+		err := logFile.Sync()
+		if nil != err {
+			log.Printf("ERROR: Failed to sync logfile to disk for job '%s' (id %d), run id %d. Error: %s\n",
+				jobRun.Job.Name, jobRun.Job.Id, jobRun.Id, err)
+		}
+		logFile.Close()
+	}()
 
 	// set job run properties
 	jobRun.StartTimestamp = time.Now().Unix()

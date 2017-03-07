@@ -72,9 +72,6 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 				log.Printf("ERROR: %s\n", err)
 			}
 		}(job, jobScene.TaskrunnerGUI)
-		//log.Println("==== aaaa")
-		//jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(job))
-		//log.Println("==== bbbb")
 	}, jobScene.Job)
 
 	configureButton := gtk.NewButton()
