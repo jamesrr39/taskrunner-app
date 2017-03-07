@@ -2,19 +2,20 @@ package main
 
 import (
 	"os"
-	"taskrunner-app/taskrunner"
-	"taskrunner-app/taskrunner-gtk/ui"
+	"taskrunner-app/taskrunner-gtk/gui"
+	"taskrunner-app/taskrunnerdal"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gtk"
 
 	"github.com/mattn/go-gtk/glib"
 
+	"github.com/jamesrr39/goutil/user"
 	"github.com/mattn/go-gtk/gdk"
 )
 
 var (
-	taskrunnerInstance    *taskrunner.TaskrunnerInstance
+	taskrunnerDAL         *taskrunnerdal.TaskrunnerDAL
 	taskrunnerApplication *kingpin.Application
 )
 
@@ -29,7 +30,7 @@ func main() {
 	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
-	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerInstance)
+	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL)
 	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
@@ -39,12 +40,16 @@ func main() {
 func setupApplicationFlags() {
 	taskrunnerDir := taskrunnerApplication.
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
-		Default("~/.local/share/taskrunner").
+		Default("~/.local/share/github.com/jamesrr39/taskrunner-app").
 		String()
 
 	taskrunnerApplication.Action(func(context *kingpin.ParseContext) error {
-		var err error
-		taskrunnerInstance, err = taskrunner.NewTaskrunnerInstanceAndEnsurePaths(*taskrunnerDir)
+		expandedDir, err := user.ExpandUser(*taskrunnerDir)
+		if nil != err {
+			return err
+		}
+
+		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir)
 		return err
 	})
 }

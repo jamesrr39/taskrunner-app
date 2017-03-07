@@ -1,5 +1,6 @@
 package taskrunner
 
+/*
 import (
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,8 @@ import (
 	"path/filepath"
 	"strconv"
 )
-
+*/
+/*
 // creates a new job, and adds an Id property onto the job passed in.
 func (t *TaskrunnerInstance) CreateJob(job *Job) error {
 
@@ -39,7 +41,8 @@ func (t *TaskrunnerInstance) CreateJob(job *Job) error {
 	return t.SaveJob(job)
 
 }
-
+*/
+/*
 func (t *TaskrunnerInstance) SaveJob(job *Job) error {
 
 	if job.Id == 0 {
@@ -60,7 +63,8 @@ func (t *TaskrunnerInstance) SaveJob(job *Job) error {
 
 	return ioutil.WriteFile(filepath.Join(jobFolderPath, "config.json"), fileBytes, 0600)
 }
-
+*/
+/*
 func (taskrunnerInstance *TaskrunnerInstance) GetAllJobs() ([]*Job, error) {
 	fmt.Printf("getting jobs dir\n")
 	jobsDir := taskrunnerInstance.jobsDir()
@@ -108,3 +112,4 @@ func (taskrunnerInstance *TaskrunnerInstance) GetAllJobs() ([]*Job, error) {
 	return jobs, nil
 
 }
+*/

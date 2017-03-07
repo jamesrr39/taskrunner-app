@@ -1,4 +1,4 @@
-package taskrunner
+package taskexecutor
 
 import (
 	"bufio"

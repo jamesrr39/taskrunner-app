@@ -1,14 +1,5 @@
 package taskrunner
 
-import (
-	"encoding/json"
-	"io/ioutil"
-	"log"
-	"os"
-	"path/filepath"
-	"strconv"
-)
-
 type JobRunState int
 
 const (
@@ -16,6 +7,7 @@ const (
 	JOB_RUN_STATE_FAILED
 	JOB_RUN_STATE_SUCCESS
 	JOB_RUN_STATE_IN_PROGRESS
+	JOB_RUN_STATE_NOT_STARTED
 )
 
 var jobRunStates = [...]string{
@@ -23,6 +15,7 @@ var jobRunStates = [...]string{
 	"Failed",
 	"Success",
 	"In Progress",
+	"Not Started",
 }
 
 func (e JobRunState) String() string {
@@ -32,20 +25,30 @@ func (e JobRunState) String() string {
 type TriggerType string
 
 type JobRun struct {
-	Id             int         `json:"id"`
+	Id             uint64      `json:"id"`
 	State          JobRunState `json:"status"`
 	StartTimestamp int64       `json:"startTimestamp"`
 	EndTimestamp   int64       `json:"endTimestamp,omitempty"`
 	Trigger        TriggerType `json:"trigger"`
 	Job            *Job        `json:"-"`
-	Pid            int         `json:"pid"`
-	ExitCode       int         `json:"exitCode"`
+	Pid            *int        `json:"pid"`      // nil for not started
+	ExitCode       *int        `json:"exitCode"` // nil for not started
 }
 
-func (job *Job) NewJobRun(id int, state JobRunState, startTimestamp int64, endTimestamp int64, trigger TriggerType, pid int, exitCode int) *JobRun {
-	return &JobRun{Id: id, State: state, StartTimestamp: startTimestamp, EndTimestamp: endTimestamp, Trigger: trigger, Job: job, Pid: pid, ExitCode: exitCode}
+func (job *Job) NewJobRun(trigger TriggerType) *JobRun {
+	return &JobRun{
+		Id:             0,
+		State:          JOB_RUN_STATE_NOT_STARTED,
+		StartTimestamp: 0,
+		EndTimestamp:   0,
+		Trigger:        trigger,
+		Job:            job,
+		Pid:            nil,
+		ExitCode:       nil,
+	}
 }
 
+/*
 func (jobRun *JobRun) WriteToDisk() error {
 	summaryFilePath := filepath.Join(jobRun.Path(), "summary.json")
 	fileJson, err := json.Marshal(&jobRun)
@@ -61,7 +64,8 @@ func (jobRun *JobRun) WriteToDisk() error {
 
 	return nil
 }
-
+*/
+/*
 // ~/.taskrunner/jobs/myjob/runs/{}
 // creates the job run folder and any other folders, if necessary. Returns Id of the job, path to newly created job folder and an error.
 func (job *Job) createNewJobRunFolder() (int, string, error) {
@@ -81,7 +85,7 @@ func (job *Job) createNewJobRunFolder() (int, string, error) {
 		}
 
 		if jobId > 1000000 {
-			panic("Exceeded maximum amount of jobs allowed") // todo replace folder scanning with a count
+			return 0, "", errors.New("Exceeded maximum amount of jobs allowed")
 		}
 		jobId++
 	}
@@ -98,3 +102,4 @@ func (j *JobRun) SummaryPath() string {
 func (j *JobRun) LogFilePath() string {
 	return filepath.Join(j.Path(), "joboutput.log")
 }
+*/

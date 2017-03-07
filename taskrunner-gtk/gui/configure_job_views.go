@@ -9,24 +9,24 @@ import (
 
 type EditJobView struct {
 	*TaskrunnerGUI
-	Job *taskrunner.Job
+	Job      *taskrunner.Job
+	isClosed bool
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) NewEditJobView(job *taskrunner.Job) *EditJobView {
-	return &EditJobView{taskrunnerGUI, job}
+	return &EditJobView{taskrunnerGUI, job, true}
 }
 
 func (editJobView *EditJobView) Title() string {
 	return "Editing :: " + editJobView.Job.Name
 }
 
-func (editJobView *EditJobView) IsCurrentlyRendered() bool {
-	switch editJobView.TaskrunnerGUI.PaneContent.(type) {
-	case *EditJobView:
-		return true
-	default:
-		return false
-	}
+func (editJobView *EditJobView) OnClose() {
+	editJobView.isClosed = true
+}
+
+func (editJobView *EditJobView) OnShow() {
+	editJobView.isClosed = false
 }
 
 func (editJobView *EditJobView) Content() gtk.IWidget {
@@ -43,14 +43,14 @@ func (editJobView *EditJobView) Content() gtk.IWidget {
 			panic("couldn't convert createJobTableEntries")
 		}
 
-		job, err := entries.ToJob()
+		job, err := entries.ToJob(0)
 		if nil != err {
 			entries.ValidationLabel.SetLabel(err.Error())
 			entries.ValidationLabel.ShowAll()
 			return
 		}
 
-		err = job.TaskrunnerInstance.SaveJob(job)
+		err = editJobView.TaskrunnerDAL.JobDAL.Create(job)
 		if nil != err {
 			entries.ValidationLabel.SetLabel(err.Error())
 			entries.ValidationLabel.ShowAll()

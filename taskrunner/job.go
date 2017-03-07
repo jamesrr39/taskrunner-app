@@ -1,49 +1,32 @@
 package taskrunner
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
-	"io/ioutil"
-	"log"
-	"os"
-	"os/exec"
-	"path/filepath"
-	"strconv"
-	"time"
-
-	"github.com/bradfitz/slice"
 )
-
-const TASKRUNNER_SOURCE_NAME string = "TASKRUNNER"
 
 type Script string
 
 type Job struct {
-	Id                 uint                `json:"-"`
-	Name               string              `json:"name"`
-	Description        string              `json:"description"`
-	Script             Script              `json:"script"`
-	TaskrunnerInstance *TaskrunnerInstance `json:"-"`
+	Id          uint   `json:"-"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Script      Script `json:"script"`
 }
 
-func NewJob(name string, description string, script Script, taskrunnerInstance *TaskrunnerInstance) (*Job, error) {
+func NewJob(id uint, name string, description string, script Script) (*Job, error) {
 	if "" == name {
 		return nil, errors.New("A job must have a name")
 	}
 
-	id, err := taskrunnerInstance.nextId()
-	if nil != err {
-		return nil, err
-	}
-
-	return &Job{Id: id, Name: name, Description: description, Script: script, TaskrunnerInstance: taskrunnerInstance}, nil
+	return &Job{Id: id, Name: name, Description: description, Script: script}, nil
 }
 
+/*
 func (job *Job) Path() string {
 	return filepath.Join(job.TaskrunnerInstance.Basepath, "jobs", strconv.Itoa(int(job.Id)))
 }
-
+*/
+/*
 // cleans previous workspace, creates folder for new workspace
 func (job *Job) cleanWorkspace() error {
 	workspacePath := job.workspacePath()
@@ -156,49 +139,9 @@ func (job *Job) Run(trigger TriggerType) (*JobRun, error) {
 
 	return jobRun, nil
 }
+*/
 
-func (job *Job) GetRunsPath() string {
-	return filepath.Join(job.Path(), "runs")
-}
-
-func (job *Job) GetRuns() ([]*JobRun, error) {
-	fileinfos, err := ioutil.ReadDir(job.GetRunsPath())
-	if nil != err {
-		return nil, err
-	}
-
-	var runs []*JobRun
-
-	for _, fileinfo := range fileinfos {
-		if !fileinfo.IsDir() {
-			log.Printf("Found unexpected file in job runs directory: %s\n", filepath.Join(job.GetRunsPath(), fileinfo.Name()))
-			continue
-		}
-
-		jobRunId, err := strconv.Atoi(fileinfo.Name())
-		if nil != err {
-			log.Printf("Found unexpected folder in job runs directory: %s\n", filepath.Join(job.GetRunsPath(), fileinfo.Name()))
-			continue
-		}
-
-		run, err := job.GetRun(jobRunId)
-		if nil != err {
-			log.Println(err)
-			continue
-		}
-
-		runs = append(runs, run) // todo go func
-
-	}
-
-	slice.Sort(runs, func(i, j int) bool {
-		return runs[i].Id > runs[j].Id
-	})
-
-	return runs, nil
-
-}
-
+/*
 // 0 if no runs
 func (job *Job) GetLastRunId() int {
 	numberOfRuns := 0
@@ -222,23 +165,4 @@ func (job *Job) GetLastRunId() int {
 	return numberOfRuns
 
 }
-
-func (job *Job) GetRun(id int) (*JobRun, error) {
-	runDir := filepath.Join(job.GetRunsPath(), strconv.Itoa(id))
-
-	summaryFile := filepath.Join(runDir, "summary.json")
-	fileBytes, err := ioutil.ReadFile(summaryFile)
-	if nil != err {
-		return nil, err
-	}
-
-	var jobRun *JobRun
-	err = json.Unmarshal(fileBytes, &jobRun)
-	if nil != err {
-		return nil, err
-	}
-
-	jobRun.Job = job
-
-	return jobRun, nil
-}
+*/

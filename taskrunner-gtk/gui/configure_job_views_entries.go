@@ -46,13 +46,13 @@ func (editJobTableEntries *ConfigureJobTableEntries) ToTable() *gtk.Table {
 	return table
 }
 
-func (editJobTableEntries *ConfigureJobTableEntries) ToJob() (*taskrunner.Job, error) {
+func (editJobTableEntries *ConfigureJobTableEntries) ToJob(jobId uint) (*taskrunner.Job, error) {
 
 	job, err := taskrunner.NewJob(
+		jobId,
 		editJobTableEntries.NameEntry.GetText(),
 		editJobTableEntries.DescriptionEntry.GetText(),
-		editJobTableEntries.GetScriptEntryText(),
-		editJobTableEntries.TaskrunnerGUI.TaskrunnerInstance)
+		editJobTableEntries.GetScriptEntryText())
 
 	if nil != err {
 		return nil, err

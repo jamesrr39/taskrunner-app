@@ -14,19 +14,37 @@ import (
 
 type JobScene struct {
 	*TaskrunnerGUI
-	Job *taskrunner.Job
+	Job      *taskrunner.Job
+	isClosed bool
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) NewJobScene(job *taskrunner.Job) *JobScene {
-	return &JobScene{taskrunnerGUI, job}
+	return &JobScene{taskrunnerGUI, job, true}
 }
 
-func (jobScene *JobScene) IsCurrentlyRendered() bool {
-	paneContentJobScene, ok := jobScene.TaskrunnerGUI.PaneContent.(*JobScene)
-	if ok && paneContentJobScene.Job.Id == jobScene.Job.Id {
-		return true
-	}
-	return false
+func (jobScene *JobScene) OnClose() {
+	jobScene.isClosed = true
+}
+
+func (jobScene *JobScene) OnShow() {
+	jobScene.isClosed = false
+
+	go func(jobScene *JobScene) {
+		renderedJob := jobScene.Job
+		for {
+			if jobScene.isClosed {
+				return
+			}
+			select {
+			case <-jobScene.TaskrunnerGUI.JobStatusChangeChan:
+				gdk.ThreadsEnter()
+				jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(renderedJob)) // todo check still on this screen interface CurrentSceneRendered
+				gdk.ThreadsLeave()
+			default:
+				// non-blocking receive
+			}
+		}
+	}(jobScene)
 }
 
 func (jobScene *JobScene) Title() string {
@@ -46,15 +64,17 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 			panic("couldn't convert to job")
 		}
 		go func(job *taskrunner.Job, taskrunnerGUI *TaskrunnerGUI) {
-			jobRun, _ := job.Run("GUI")
-			taskrunnerGUI.JobStatusChangeChan <- jobRun
-			/*gdk.ThreadsEnter()
-			taskrunnerGUI.RenderJobRuns(job) // todo check still on this screen interface CurrentSceneRendered
-			gdk.ThreadsLeave()*/
-		}(job, jobScene.TaskrunnerGUI)
+			log.Printf("about to run %s (id: %d)\n", job.Name, job.Id)
+			jobRun := job.NewJobRun("GUI")
 
-		// refresh
-		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(job))
+			err := taskrunnerGUI.TaskrunnerDAL.JobRunsDAL.CreateAndRun(jobRun, taskrunnerGUI.JobStatusChangeChan)
+			if nil != err {
+				log.Printf("ERROR: %s\n", err)
+			}
+		}(job, jobScene.TaskrunnerGUI)
+		//log.Println("==== aaaa")
+		//jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(job))
+		//log.Println("==== bbbb")
 	}, jobScene.Job)
 
 	configureButton := gtk.NewButton()
@@ -71,16 +91,26 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	hbox.PackStart(runButton, false, false, 0)
 	hbox.PackEnd(configureButton, false, false, 0)
 	box.PackStart(hbox, false, false, 0)
+
+	box.PackStart(jobScene.buildListing(), true, true, 5)
+
+	return box
+
+}
+
+func (jobScene *JobScene) buildListing() gtk.IWidget {
 	var listing gtk.IWidget
 
-	if 0 == jobScene.Job.GetLastRunId() {
+	lastJobRun, err := jobScene.TaskrunnerGUI.TaskrunnerDAL.JobRunsDAL.GetLastRun(jobScene.Job)
+	if nil != err {
+		listing = gtk.NewLabel(err.Error())
+	} else if nil == lastJobRun {
 		listing = gtk.NewLabel("No runs yet...")
 	} else {
 		table, err := jobScene.TaskrunnerGUI.buildJobRunsTable(jobScene.Job)
 		if nil != err {
 			listing = gtk.NewLabel("Error fetching job runs for " + jobScene.Job.Name + ". Error: " + err.Error())
 		} else {
-
 			swin := gtk.NewScrolledWindow(nil, nil)
 			swin.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
 			swin.SetShadowType(gtk.SHADOW_IN)
@@ -90,36 +120,22 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 			swin.AddWithViewPort(innerVbox)
 
 			listing = swin
-
 		}
 	}
-	box.PackStart(listing, true, true, 5)
 
-	go func(renderedJob *taskrunner.Job) {
-		jobRun := <-jobScene.TaskrunnerGUI.JobStatusChangeChan
-		log.Printf("catching job run id: %d. Current job id: %d\n", jobRun.Job.Id, renderedJob.Id)
-		if renderedJob.Id != jobRun.Job.Id {
-			return // skip
-		}
-		gdk.ThreadsEnter()
-		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(renderedJob)) // todo check still on this screen interface CurrentSceneRendered
-		gdk.ThreadsLeave()
-
-	}(jobScene.Job)
-
-	return box
+	return listing
 
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) buildJobRunsTable(job *taskrunner.Job) (gtk.IWidget, error) {
-	runs, err := job.GetRuns()
+	runs, err := taskrunnerGUI.TaskrunnerDAL.JobRunsDAL.GetAllForJob(job)
 	if nil != err {
 		return nil, err
 	}
 	table := gtk.NewTable(3, uint(len(runs)), false)
 	for index, run := range runs {
 
-		runIdButton := gtk.NewButtonWithLabel("#" + strconv.Itoa(run.Id))
+		runIdButton := gtk.NewButtonWithLabel("#" + strconv.FormatUint(run.Id, 10))
 		runIdButton.SetRelief(gtk.RELIEF_NONE)
 		runIdButton.Clicked(func(context *glib.CallbackContext) {
 			if jobRun, ok := context.Data().(*taskrunner.JobRun); ok {
