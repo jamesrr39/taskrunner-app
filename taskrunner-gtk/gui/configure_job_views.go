@@ -46,11 +46,6 @@ func (editJobView *EditJobView) Content() gtk.IWidget {
 			panic("couldn't convert createJobTableEntries")
 		}
 
-		// start test validation label
-		entries.ValidationLabel.SetText("error - red")
-		return
-		// end test validation label
-
 		job, err := entries.ToJob(editJobView.Job.Id)
 		if nil != err {
 			entries.ValidationLabel.SetText(err.Error())

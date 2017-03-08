@@ -87,6 +87,8 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 
 	hbox.PackStart(runButton, false, false, 0)
 	hbox.PackEnd(configureButton, false, false, 0)
+
+	box.PackStart(gtk.NewLabel(jobScene.Job.Description), false, false, 5)
 	box.PackStart(hbox, false, false, 0)
 
 	box.PackStart(jobScene.buildListing(), true, true, 5)
