@@ -2,6 +2,7 @@ package gui
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strconv"
 	"time"
@@ -9,10 +10,16 @@ import (
 	"github.com/mattn/go-gtk/gtk"
 )
 
-func fillTextBufferFromFile(textBuffer *gtk.TextBuffer, fileReader io.Reader, linesToRead uint) {
+func fillTextBufferFromFile(textBuffer *gtk.TextBuffer, fileReader io.Reader, linesToRead uint, jobRunLogLocation string) {
 	fileScanner := bufio.NewScanner(fileReader)
 	linesRead := uint(0)
-	for fileScanner.Scan() && linesRead < linesToRead {
+	for fileScanner.Scan() {
+		if linesRead >= linesToRead {
+			textBuffer.InsertAtCursor(fmt.Sprintf("\n\nOutput truncated as it exceeds %d lines.\nFull output can be found at %s\n",
+				linesRead,
+				jobRunLogLocation))
+			return
+		}
 		text := fileScanner.Text()
 		textBuffer.InsertAtCursor(text + "\n")
 		linesRead++

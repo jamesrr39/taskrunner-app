@@ -17,9 +17,10 @@ type TaskrunnerGUI struct {
 	*taskrunnerdal.TaskrunnerDAL
 	JobStatusChangeChan chan *taskrunner.JobRun // job runs
 	titleLabel          *gtk.Label
+	options             TaskrunnerGUIOptions
 }
 
-func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL) *TaskrunnerGUI {
+func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, options TaskrunnerGUIOptions) *TaskrunnerGUI {
 
 	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
 	window.SetSizeRequest(800, 600)
@@ -40,6 +41,7 @@ func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL) *TaskrunnerGUI
 		TaskrunnerDAL:       taskrunnerDAL,
 		JobStatusChangeChan: make(chan *taskrunner.JobRun),
 		titleLabel:          titleLabel,
+		options:             options,
 	}
 
 	mainFrame.PackStart(buildToolbar(taskrunnerGUI), false, false, 0)

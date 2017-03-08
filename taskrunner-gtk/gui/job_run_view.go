@@ -104,7 +104,7 @@ func (jobRunScene *JobRunScene) buildTextarea(jobRun *taskrunner.JobRun) *gtk.Te
 		log.Println(errMessage)
 	} else {
 		defer logFile.Close()
-		fillTextBufferFromFile(logTextBuffer, logFile, 200) //todo
+		fillTextBufferFromFile(logTextBuffer, logFile, jobRunScene.TaskrunnerGUI.options.JobLogMaxLines, jobRunScene.JobRunsDAL.GetJobRunLogLocation(jobRun))
 	}
 	return logTextarea
 }

@@ -34,32 +34,42 @@ func (editJobView *EditJobView) Content() gtk.IWidget {
 
 	// editing table
 	editJobTableEntries := editJobView.TaskrunnerGUI.NewConfigureJobTableEntries(editJobView.Job)
+
+	vbox.PackStart(editJobTableEntries.ValidationLabel.Widget, false, true, 0)
+
 	vbox.PackStart(editJobTableEntries.ToTable(), false, false, 0)
 
-	createButton := gtk.NewButtonWithLabel("Save!")
-	createButton.Clicked(func(ctx *glib.CallbackContext) {
+	saveButton := gtk.NewButtonWithLabel("Save!")
+	saveButton.Clicked(func(ctx *glib.CallbackContext) {
 		entries, ok := ctx.Data().(*ConfigureJobTableEntries)
 		if !ok {
 			panic("couldn't convert createJobTableEntries")
 		}
 
-		job, err := entries.ToJob(0)
+		// start test validation label
+		entries.ValidationLabel.SetText("error - red")
+		return
+		// end test validation label
+
+		job, err := entries.ToJob(editJobView.Job.Id)
 		if nil != err {
-			entries.ValidationLabel.SetLabel(err.Error())
-			entries.ValidationLabel.ShowAll()
+			entries.ValidationLabel.SetText(err.Error())
 			return
 		}
 
-		err = editJobView.TaskrunnerDAL.JobDAL.Create(job)
+		if 0 == job.Id {
+			err = editJobView.TaskrunnerDAL.JobDAL.Create(job)
+		} else {
+			err = editJobView.TaskrunnerDAL.JobDAL.Update(job)
+		}
 		if nil != err {
-			entries.ValidationLabel.SetLabel(err.Error())
-			entries.ValidationLabel.ShowAll()
+			entries.ValidationLabel.SetText(err.Error())
 			return
 		}
 		entries.TaskrunnerGUI.RenderScene(entries.TaskrunnerGUI.NewJobScene(job))
 
 	}, editJobTableEntries)
-	vbox.PackEnd(createButton, false, false, 0)
+	vbox.PackEnd(saveButton, false, false, 0)
 
 	return vbox
 }

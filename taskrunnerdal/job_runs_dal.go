@@ -190,7 +190,12 @@ func (jobRunsDAL *JobRunsDAL) GetLastRun(job *taskrunner.Job) (*taskrunner.JobRu
 }
 
 func (jobRunsDAL *JobRunsDAL) GetJobRunLog(jobRun *taskrunner.JobRun) (io.ReadCloser, error) {
-	return os.Open(filepath.Join(jobRunsDAL.getDirForJobRun(jobRun.Job, jobRun.Id), "joboutput.log"))
+	return os.Open(jobRunsDAL.GetJobRunLogLocation(jobRun))
+}
+
+// exposed for UI file truncated message
+func (jobRunsDAL *JobRunsDAL) GetJobRunLogLocation(jobRun *taskrunner.JobRun) string {
+	return filepath.Join(jobRunsDAL.getDirForJobRun(jobRun.Job, jobRun.Id), "joboutput.log")
 }
 
 func (jobRunsDAL *JobRunsDAL) getDirForJobRun(job *taskrunner.Job, runId uint64) string {

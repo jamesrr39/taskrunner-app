@@ -10,7 +10,7 @@ type ConfigureJobTableEntries struct {
 	NameEntry        *gtk.Entry
 	DescriptionEntry *gtk.Entry
 	ScriptEntry      *gtk.TextView
-	ValidationLabel  *gtk.Label
+	*ValidationLabel
 	*TaskrunnerGUI
 	*taskrunner.Job
 }
@@ -19,7 +19,7 @@ func (taskrunnerGUI *TaskrunnerGUI) NewConfigureJobTableEntries(job *taskrunner.
 	editJobTable := &ConfigureJobTableEntries{
 		NameEntry:        gtk.NewEntry(),
 		DescriptionEntry: gtk.NewEntry(),
-		ValidationLabel:  gtk.NewLabel(""),
+		ValidationLabel:  NewValidationLabel(errorRed()),
 		TaskrunnerGUI:    taskrunnerGUI,
 		Job:              job,
 	}

@@ -102,7 +102,7 @@ func (jobDAL *JobDAL) save(job *taskrunner.Job) error {
 	}
 
 	for _, existingJob := range existingJobs {
-		if existingJob.Name == job.Name {
+		if existingJob.Name == job.Name && existingJob.Id != job.Id {
 			return fmt.Errorf("Job name: %s already taken by job Id %d.", job.Name, existingJob.Id)
 		}
 	}

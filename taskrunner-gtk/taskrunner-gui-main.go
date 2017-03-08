@@ -17,6 +17,7 @@ import (
 var (
 	taskrunnerDAL         *taskrunnerdal.TaskrunnerDAL
 	taskrunnerApplication *kingpin.Application
+	jobLogMaxLines        *uint
 )
 
 func main() {
@@ -30,11 +31,10 @@ func main() {
 	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
-	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL)
+	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines})
 	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
-
 }
 
 func setupApplicationFlags() {
@@ -42,6 +42,10 @@ func setupApplicationFlags() {
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
 		Default("~/.local/share/github.com/jamesrr39/taskrunner-app").
 		String()
+
+	jobLogMaxLines = taskrunnerApplication.Flag("job-log-max-lines", "maximum number of lines to display in the job output. Lines after that are not shown in the UI, but the UI indicates where the whole log file is instead").
+		Default("10000").
+		Uint()
 
 	taskrunnerApplication.Action(func(context *kingpin.ParseContext) error {
 		expandedDir, err := user.ExpandUser(*taskrunnerDir)
