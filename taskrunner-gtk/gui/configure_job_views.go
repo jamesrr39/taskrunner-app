@@ -37,7 +37,7 @@ func (editJobView *EditJobView) Content() gtk.IWidget {
 
 	vbox.PackStart(editJobTableEntries.ValidationLabel.Widget, false, true, 0)
 
-	vbox.PackStart(editJobTableEntries.ToTable(), false, false, 0)
+	vbox.PackStart(editJobTableEntries.ToWidget(), true, true, 0)
 
 	saveButton := gtk.NewButtonWithLabel("Save!")
 	saveButton.Clicked(func(ctx *glib.CallbackContext) {

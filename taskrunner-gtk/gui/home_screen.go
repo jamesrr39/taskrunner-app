@@ -63,7 +63,6 @@ func (homeScreen *HomeScene) Content() gtk.IWidget {
 		swin.AddWithViewPort(innerVbox)
 
 		jobsTableWidget = swin
-
 	}
 
 	box.PackStart(jobsTableWidget, true, true, 0)

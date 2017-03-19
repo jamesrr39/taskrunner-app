@@ -78,7 +78,7 @@ func (jobDAL *JobDAL) Create(job *taskrunner.Job) error {
 
 	err = jobDAL.save(job)
 	if nil != err {
-		return nil
+		return err
 	}
 
 	return jobDAL.ensureRunsFolder(job)
