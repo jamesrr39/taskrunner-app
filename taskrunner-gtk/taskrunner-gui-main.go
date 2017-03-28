@@ -1,21 +1,27 @@
 package main
 
 import (
+	"log"
 	"os"
-	"taskrunner-app/taskrunner"
-	"taskrunner-app/taskrunner-gtk/ui"
+	"runtime"
+	"taskrunner-app/taskrunner-gtk/gui"
+	"taskrunner-app/taskrunnerdal"
+	"time"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gtk"
 
 	"github.com/mattn/go-gtk/glib"
 
+	"github.com/jamesrr39/goutil/user"
 	"github.com/mattn/go-gtk/gdk"
 )
 
 var (
-	taskrunnerInstance    *taskrunner.TaskrunnerInstance
+	taskrunnerDAL         *taskrunnerdal.TaskrunnerDAL
 	taskrunnerApplication *kingpin.Application
+	jobLogMaxLines        *uint
+	shouldMonitor         *bool
 )
 
 func main() {
@@ -24,27 +30,52 @@ func main() {
 	setupApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
 
+	if *shouldMonitor {
+		go monitor()
+	}
+
 	glib.ThreadInit(nil)
 	gdk.ThreadsInit()
 	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
-	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerInstance)
+	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines})
 	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
-
 }
 
 func setupApplicationFlags() {
 	taskrunnerDir := taskrunnerApplication.
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
-		Default("~/.local/share/taskrunner").
+		Default("~/.local/share/github.com/jamesrr39/taskrunner-app").
 		String()
 
+	shouldMonitor = taskrunnerApplication.Flag("monitor", "print information about the number of goroutines used to the log output").
+		Bool()
+
+	jobLogMaxLines = taskrunnerApplication.Flag("job-log-max-lines", "maximum number of lines to display in the job output. Lines after that are not shown in the UI, but the UI indicates where the whole log file is instead").
+		Default("10000").
+		Uint()
+
 	taskrunnerApplication.Action(func(context *kingpin.ParseContext) error {
-		var err error
-		taskrunnerInstance, err = taskrunner.NewTaskrunnerInstanceAndEnsurePaths(*taskrunnerDir)
-		return err
+		expandedDir, err := user.ExpandUser(*taskrunnerDir)
+		if nil != err {
+			return err
+		}
+
+		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir)
+		if nil != err {
+			return err
+		}
+
+		return nil
 	})
+}
+
+func monitor() {
+	for {
+		time.Sleep(time.Second)
+		log.Printf("using %d goroutines (including 1 for monitoring).\n", runtime.NumGoroutine())
+	}
 }

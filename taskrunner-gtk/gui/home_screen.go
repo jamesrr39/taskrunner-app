@@ -5,6 +5,7 @@ import (
 	"taskrunner-app/taskrunner"
 	"time"
 
+	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
 )
@@ -17,13 +18,10 @@ func (taskrunner *TaskrunnerGUI) NewHomeScene() *HomeScene {
 	return &HomeScene{taskrunner}
 }
 
-func (homeScreen *HomeScene) IsCurrentlyRendered() bool {
-	switch homeScreen.TaskrunnerGUI.PaneContent.(type) {
-	case *HomeScene:
-		return true
-	default:
-		return false
-	}
+func (homeScreen *HomeScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
+	gdk.ThreadsEnter()
+	homeScreen.TaskrunnerGUI.RenderScene(homeScreen.TaskrunnerGUI.NewHomeScene())
+	gdk.ThreadsLeave()
 }
 
 func (homeScreen *HomeScene) Title() string {
@@ -47,7 +45,6 @@ func (homeScreen *HomeScene) Content() gtk.IWidget {
 		swin.AddWithViewPort(innerVbox)
 
 		jobsTableWidget = swin
-
 	}
 
 	box.PackStart(jobsTableWidget, true, true, 0)
@@ -56,7 +53,7 @@ func (homeScreen *HomeScene) Content() gtk.IWidget {
 }
 
 func (homeScreen *HomeScene) buildJobsSummaryTable() (*gtk.Table, error) {
-	jobs, err := homeScreen.TaskrunnerGUI.TaskrunnerInstance.GetAllJobs()
+	jobs, err := homeScreen.TaskrunnerGUI.TaskrunnerDAL.GetAll()
 	if nil != err {
 		return nil, err
 	}
@@ -74,21 +71,18 @@ func (homeScreen *HomeScene) buildJobsSummaryTable() (*gtk.Table, error) {
 
 		table.AttachDefaults(jobNameLabel, 1, 2, uint(index), uint(index+1))
 
-		lastRunId := job.GetLastRunId()
-		if 0 == lastRunId {
-			table.AttachDefaults(gtk.NewLabel("No runs yet..."), 2, 5, uint(index), uint(index+1))
-			continue
-		}
-
-		lastRun, err := job.GetRun(lastRunId)
-		// todo handle in progress
+		lastJobRun, err := homeScreen.TaskrunnerGUI.TaskrunnerDAL.JobRunsDAL.GetLastRun(job)
 		if nil != err {
 			table.AttachDefaults(gtk.NewLabel(err.Error()), 2, 5, uint(index), uint(index+1))
+		} else if nil == lastJobRun {
+			table.AttachDefaults(gtk.NewLabel("No runs yet..."), 2, 5, uint(index), uint(index+1))
+			continue
 		} else {
-			endDateTime := time.Unix(lastRun.EndTimestamp, 0)
-			table.AttachDefaults(gtk.NewLabel("#"+strconv.Itoa(lastRunId)), 2, 3, uint(index), uint(index+1))
-			table.AttachDefaults(gtk.NewLabel(GetTimeAgo(endDateTime)), 3, 4, uint(index), uint(index+1))
-			table.AttachDefaults(gtk.NewLabel(lastRun.State.String()), 4, 5, uint(index), uint(index+1))
+			// todo handle in progress
+			endDateTime := time.Unix(lastJobRun.EndTimestamp, 0)
+			table.AttachDefaults(gtk.NewLabel("#"+strconv.FormatUint(uint64(lastJobRun.Id), 10)), 2, 3, uint(index), uint(index+1))
+			table.AttachDefaults(gtk.NewLabel(GetTimeAgo(endDateTime)+" ago"), 3, 4, uint(index), uint(index+1))
+			table.AttachDefaults(gtk.NewLabel(lastJobRun.State.String()), 4, 5, uint(index), uint(index+1))
 		}
 	}
 

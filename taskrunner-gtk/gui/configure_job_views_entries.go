@@ -7,10 +7,11 @@ import (
 )
 
 type ConfigureJobTableEntries struct {
-	NameEntry        *gtk.Entry
-	DescriptionEntry *gtk.Entry
-	ScriptEntry      *gtk.TextView
-	ValidationLabel  *gtk.Label
+	NameEntry               *gtk.Entry
+	DescriptionEntry        *gtk.Entry
+	ScriptEntry             *gtk.TextView
+	scriptEntryScrollWindow *gtk.ScrolledWindow
+	*ValidationLabel
 	*TaskrunnerGUI
 	*taskrunner.Job
 }
@@ -19,40 +20,49 @@ func (taskrunnerGUI *TaskrunnerGUI) NewConfigureJobTableEntries(job *taskrunner.
 	editJobTable := &ConfigureJobTableEntries{
 		NameEntry:        gtk.NewEntry(),
 		DescriptionEntry: gtk.NewEntry(),
-		ValidationLabel:  gtk.NewLabel(""),
+		ValidationLabel:  NewValidationLabel(errorRed()),
 		TaskrunnerGUI:    taskrunnerGUI,
+		ScriptEntry:      gtk.NewTextView(),
 		Job:              job,
 	}
 
-	editJobTable.ScriptEntry = gtk.NewTextView()
-	editJobTable.ScriptEntry.SetBorderWidth(2)
-
 	editJobTable.NameEntry.SetText(job.Name)
 	editJobTable.DescriptionEntry.SetText(job.Description)
-	editJobTable.ScriptEntry.GetBuffer().SetText(string(job.Script))
+
+	editJobTable.ScriptEntry.SetBorderWidth(2)
+	editJobTable.ScriptEntry.GetBuffer().SetText(string(editJobTable.Job.Script))
+
+	editJobTable.scriptEntryScrollWindow = editJobTable.GetScriptScrollWindow()
+
+	editJobTable.scriptEntryScrollWindow.AddWithViewPort(editJobTable.ScriptEntry)
 
 	return editJobTable
 }
 
-func (editJobTableEntries *ConfigureJobTableEntries) ToTable() *gtk.Table {
-
+func (editJobTableEntries *ConfigureJobTableEntries) ToWidget() gtk.IWidget {
+	vbox := gtk.NewVBox(false, 0)
 	table := gtk.NewTable(3, 2, false)
 	table.AttachDefaults(gtk.NewLabel("Name"), 0, 1, 0, 1)
 	table.AttachDefaults(editJobTableEntries.NameEntry, 1, 2, 0, 1)
 	table.AttachDefaults(gtk.NewLabel("Description"), 0, 1, 1, 2)
 	table.AttachDefaults(editJobTableEntries.DescriptionEntry, 1, 2, 1, 2)
-	table.AttachDefaults(gtk.NewLabel("Script"), 0, 1, 2, 3)
-	table.AttachDefaults(editJobTableEntries.ScriptEntry, 1, 2, 2, 3)
-	return table
+	vbox.PackStart(table, false, false, 0)
+
+	scriptLabel := gtk.NewLabel("Script:")
+	scriptLabel.SetAlignment(0, 0)
+	vbox.PackStart(scriptLabel, false, false, 0)
+
+	vbox.PackEnd(editJobTableEntries.scriptEntryScrollWindow, true, true, 0)
+	return vbox
 }
 
-func (editJobTableEntries *ConfigureJobTableEntries) ToJob() (*taskrunner.Job, error) {
+func (editJobTableEntries *ConfigureJobTableEntries) ToJob(jobId uint) (*taskrunner.Job, error) {
 
 	job, err := taskrunner.NewJob(
+		jobId,
 		editJobTableEntries.NameEntry.GetText(),
 		editJobTableEntries.DescriptionEntry.GetText(),
-		editJobTableEntries.GetScriptEntryText(),
-		editJobTableEntries.TaskrunnerGUI.TaskrunnerInstance)
+		editJobTableEntries.GetScriptEntryText())
 
 	if nil != err {
 		return nil, err
@@ -63,6 +73,14 @@ func (editJobTableEntries *ConfigureJobTableEntries) ToJob() (*taskrunner.Job, e
 	}
 
 	return job, nil
+}
+
+func (editJobTableEntries *ConfigureJobTableEntries) GetScriptScrollWindow() *gtk.ScrolledWindow {
+	logTextareaScrollWindow := gtk.NewScrolledWindow(nil, nil)
+	logTextareaScrollWindow.SetPolicy(gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC)
+	logTextareaScrollWindow.SetShadowType(gtk.SHADOW_IN)
+
+	return logTextareaScrollWindow
 }
 
 func (editJobTableEntries *ConfigureJobTableEntries) GetScriptEntryText() taskrunner.Script {

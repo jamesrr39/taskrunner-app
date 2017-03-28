@@ -16,17 +16,11 @@ func (taskrunnerGUI *TaskrunnerGUI) NewEditJobView(job *taskrunner.Job) *EditJob
 	return &EditJobView{taskrunnerGUI, job}
 }
 
-func (editJobView *EditJobView) Title() string {
-	return "Editing :: " + editJobView.Job.Name
+func (editJobView *EditJobView) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
 }
 
-func (editJobView *EditJobView) IsCurrentlyRendered() bool {
-	switch editJobView.TaskrunnerGUI.PaneContent.(type) {
-	case *EditJobView:
-		return true
-	default:
-		return false
-	}
+func (editJobView *EditJobView) Title() string {
+	return "Editing :: " + editJobView.Job.Name
 }
 
 func (editJobView *EditJobView) Content() gtk.IWidget {
@@ -34,32 +28,37 @@ func (editJobView *EditJobView) Content() gtk.IWidget {
 
 	// editing table
 	editJobTableEntries := editJobView.TaskrunnerGUI.NewConfigureJobTableEntries(editJobView.Job)
-	vbox.PackStart(editJobTableEntries.ToTable(), false, false, 0)
 
-	createButton := gtk.NewButtonWithLabel("Save!")
-	createButton.Clicked(func(ctx *glib.CallbackContext) {
+	vbox.PackStart(editJobTableEntries.ValidationLabel.Widget, false, true, 0)
+
+	vbox.PackStart(editJobTableEntries.ToWidget(), true, true, 0)
+
+	saveButton := gtk.NewButtonWithLabel("Save!")
+	saveButton.Clicked(func(ctx *glib.CallbackContext) {
 		entries, ok := ctx.Data().(*ConfigureJobTableEntries)
 		if !ok {
 			panic("couldn't convert createJobTableEntries")
 		}
 
-		job, err := entries.ToJob()
+		job, err := entries.ToJob(editJobView.Job.Id)
 		if nil != err {
-			entries.ValidationLabel.SetLabel(err.Error())
-			entries.ValidationLabel.ShowAll()
+			entries.ValidationLabel.SetText(err.Error())
 			return
 		}
 
-		err = job.TaskrunnerInstance.SaveJob(job)
+		if 0 == job.Id {
+			err = editJobView.TaskrunnerDAL.JobDAL.Create(job)
+		} else {
+			err = editJobView.TaskrunnerDAL.JobDAL.Update(job)
+		}
 		if nil != err {
-			entries.ValidationLabel.SetLabel(err.Error())
-			entries.ValidationLabel.ShowAll()
+			entries.ValidationLabel.SetText(err.Error())
 			return
 		}
 		entries.TaskrunnerGUI.RenderScene(entries.TaskrunnerGUI.NewJobScene(job))
 
 	}, editJobTableEntries)
-	vbox.PackEnd(createButton, false, false, 0)
+	vbox.PackEnd(saveButton, false, false, 0)
 
 	return vbox
 }
