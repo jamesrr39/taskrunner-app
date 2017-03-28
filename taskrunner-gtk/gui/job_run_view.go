@@ -43,11 +43,11 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
 
-	vbox.PackStart(gtk.NewLabel("Started: "+startDateTime.String()+" ("+GetTimeAgo(startDateTime)+")"), false, false, 0)
+	vbox.PackStart(gtk.NewLabel("Started: "+startDateTime.String()+" ("+GetTimeAgo(startDateTime)+" ago)"), false, false, 0)
 
 	var durationStr string
 	if !isFinished {
-		durationStr = "Running for " + time.Now().Sub(startDateTime).String()
+		durationStr = "Running for " + GetTimeAgo(startDateTime)
 	} else {
 		durationStr = "Ran for " + time.Unix(jobRun.EndTimestamp, 0).Sub(startDateTime).String()
 	}

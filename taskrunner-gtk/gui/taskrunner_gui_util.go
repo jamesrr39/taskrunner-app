@@ -44,60 +44,60 @@ func GetTimeAgo(jobTime time.Time) string {
 	yearsAgo := int(float64(secondsAgo) / oneYearInSeconds)
 	if yearsAgo >= 1 {
 		if yearsAgo == 1 {
-			return "1 year ago"
+			return "1 year"
 		} else {
-			return strconv.Itoa(yearsAgo) + " years ago"
+			return strconv.Itoa(yearsAgo) + " years"
 		}
 	}
 
 	monthsAgo := int(float64(secondsAgo) / oneMonthInSeconds)
 	if monthsAgo >= 1 {
 		if monthsAgo == 1 {
-			return "1 month ago"
+			return "1 month"
 		} else {
-			return strconv.Itoa(monthsAgo) + " months ago"
+			return strconv.Itoa(monthsAgo) + " months"
 		}
 	}
 
 	weeksAgo := int(float64(secondsAgo) / oneWeekInSeconds)
 	if weeksAgo >= 1 {
 		if weeksAgo == 1 {
-			return "1 week ago"
+			return "1 week"
 		} else {
-			return strconv.Itoa(weeksAgo) + " weeks ago"
+			return strconv.Itoa(weeksAgo) + " weeks"
 		}
 	}
 
 	daysAgo := int(float64(secondsAgo) / oneDayInSeconds)
 	if daysAgo >= 1 {
 		if daysAgo == 1 {
-			return "1 day ago"
+			return "1 day"
 		} else {
-			return strconv.Itoa(daysAgo) + " days ago"
+			return strconv.Itoa(daysAgo) + " days"
 		}
 	}
 
 	hoursAgo := int(float64(secondsAgo) / oneHourInSeconds)
 	if hoursAgo >= 1 {
 		if hoursAgo == 1 {
-			return "1 hour ago"
+			return "1 hour"
 		} else {
-			return strconv.Itoa(hoursAgo) + " hours ago"
+			return strconv.Itoa(hoursAgo) + " hours"
 		}
 	}
 
 	minutesAgo := int(float64(secondsAgo) / oneMinuteInSeconds)
 	if minutesAgo >= 1 {
 		if minutesAgo == 1 {
-			return "1 minute ago"
+			return "1 minute"
 		} else {
-			return strconv.Itoa(minutesAgo) + " minutes ago"
+			return strconv.Itoa(minutesAgo) + " minutes"
 		}
 	}
 
 	if secondsAgo == 1 {
-		return "1 second ago"
+		return "1 second"
 	}
-	return strconv.FormatInt(secondsAgo, 10) + " seconds ago"
+	return strconv.FormatInt(secondsAgo, 10) + " seconds"
 
 }

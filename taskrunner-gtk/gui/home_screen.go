@@ -81,7 +81,7 @@ func (homeScreen *HomeScene) buildJobsSummaryTable() (*gtk.Table, error) {
 			// todo handle in progress
 			endDateTime := time.Unix(lastJobRun.EndTimestamp, 0)
 			table.AttachDefaults(gtk.NewLabel("#"+strconv.FormatUint(uint64(lastJobRun.Id), 10)), 2, 3, uint(index), uint(index+1))
-			table.AttachDefaults(gtk.NewLabel(GetTimeAgo(endDateTime)), 3, 4, uint(index), uint(index+1))
+			table.AttachDefaults(gtk.NewLabel(GetTimeAgo(endDateTime)+" ago"), 3, 4, uint(index), uint(index+1))
 			table.AttachDefaults(gtk.NewLabel(lastJobRun.State.String()), 4, 5, uint(index), uint(index+1))
 		}
 	}
