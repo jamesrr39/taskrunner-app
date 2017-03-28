@@ -21,6 +21,7 @@ var (
 	taskrunnerDAL         *taskrunnerdal.TaskrunnerDAL
 	taskrunnerApplication *kingpin.Application
 	jobLogMaxLines        *uint
+	shouldMonitor         *bool
 )
 
 func main() {
@@ -29,7 +30,9 @@ func main() {
 	setupApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
 
-	go monitor()
+	if *shouldMonitor {
+		go monitor()
+	}
 
 	glib.ThreadInit(nil)
 	gdk.ThreadsInit()
@@ -47,6 +50,9 @@ func setupApplicationFlags() {
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
 		Default("~/.local/share/github.com/jamesrr39/taskrunner-app").
 		String()
+
+	shouldMonitor = taskrunnerApplication.Flag("monitor", "print information about the number of goroutines used to the log output").
+		Bool()
 
 	jobLogMaxLines = taskrunnerApplication.Flag("job-log-max-lines", "maximum number of lines to display in the job output. Lines after that are not shown in the UI, but the UI indicates where the whole log file is instead").
 		Default("10000").
@@ -70,6 +76,6 @@ func setupApplicationFlags() {
 func monitor() {
 	for {
 		time.Sleep(time.Second)
-		log.Printf("using %d goroutines\n", runtime.NumGoroutine())
+		log.Printf("using %d goroutines (including 1 for monitoring).\n", runtime.NumGoroutine())
 	}
 }
