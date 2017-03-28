@@ -1,6 +1,7 @@
 package gui
 
 import (
+	"log"
 	"taskrunner-app/taskrunner"
 	"taskrunner-app/taskrunnerdal"
 
@@ -44,6 +45,14 @@ func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, options Taskru
 		options:             options,
 	}
 
+	go func() {
+		for {
+			jobRun := <-taskrunnerGUI.JobStatusChangeChan
+			log.Printf("got job run state update, now %s\n", jobRun.State)
+			taskrunnerGUI.PaneContent.OnJobRunStatusChange(jobRun)
+		}
+	}()
+
 	mainFrame.PackStart(buildToolbar(taskrunnerGUI), false, false, 0)
 	window.Add(mainFrame)
 
@@ -52,7 +61,6 @@ func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, options Taskru
 
 func (taskrunnerGUI *TaskrunnerGUI) RenderScene(scene Scene) {
 	if nil != taskrunnerGUI.paneWidget {
-		taskrunnerGUI.PaneContent.OnClose()
 		taskrunnerGUI.paneWidget.Destroy()
 	}
 	taskrunnerGUI.PaneContent = scene
@@ -64,5 +72,4 @@ func (taskrunnerGUI *TaskrunnerGUI) RenderScene(scene Scene) {
 	taskrunnerGUI.mainFrame.Add(taskrunnerGUI.paneWidget)
 
 	taskrunnerGUI.Window.ShowAll()
-	scene.OnShow()
 }

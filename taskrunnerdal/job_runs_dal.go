@@ -75,12 +75,7 @@ func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStat
 	// set job run properties
 	jobRun.StartTimestamp = time.Now().Unix()
 	jobRun.State = taskrunner.JOB_RUN_STATE_IN_PROGRESS
-	select {
-	case jobRunStatusChanInternalChan <- jobRun:
-		// non-blocking send
-	default:
-		// non-blocking send
-	}
+	jobRunStatusChanInternalChan <- jobRun
 
 	err = jobRunsDAL.writeJobRunSummary(jobRun)
 	if nil != err {
@@ -92,18 +87,21 @@ func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStat
 	return nil
 }
 
-func (jobRunsDAL *JobRunsDAL) listenAndTriggerSendToJobRunStatusChan(jobRunStatusChanInternalChan chan *taskrunner.JobRun, jobRunStatusChangeExternalChan chan *taskrunner.JobRun, jobRun *taskrunner.JobRun) {
+func (jobRunsDAL *JobRunsDAL) listenAndTriggerSendToJobRunStatusChan(
+	jobRunStatusChanInternalChan chan *taskrunner.JobRun,
+	jobRunStatusChangeExternalChan chan *taskrunner.JobRun,
+	jobRun *taskrunner.JobRun) {
+
 	for {
-		select {
-		case jobRun := <-jobRunStatusChanInternalChan:
-			log.Printf("writing job run %v to file from channel\n", jobRun)
-			err := jobRunsDAL.writeJobRunSummary(jobRun)
-			if nil != err {
-				log.Printf("ERROR: couldn't write job run to file. Error: %s\n", err)
-			}
-			select {
-			case jobRunStatusChangeExternalChan <- jobRun:
-			}
+		jobRun := <-jobRunStatusChanInternalChan
+		err := jobRunsDAL.writeJobRunSummary(jobRun)
+		if nil != err {
+			log.Printf("ERROR: couldn't write job run %d for job '%s' (id: %d) to file. Error: %s\n", jobRun.Id, jobRun.Job.Name, jobRun.Job.Id, err)
+		}
+
+		jobRunStatusChangeExternalChan <- jobRun
+		if jobRun.State.IsFinished() {
+			return
 		}
 	}
 }
@@ -221,6 +219,5 @@ func (jobRunsDAL *JobRunsDAL) writeJobRunSummary(jobRun *taskrunner.JobRun) erro
 	if nil != err {
 		return err
 	}
-	log.Printf("writing job summary for job id %d: %v\n", jobRun.Id, jobRun)
 	return ioutil.WriteFile(filepath.Join(jobRunsDAL.getDirForJobRun(jobRun.Job, jobRun.Id), "summary.json"), summaryBytes, 0700)
 }

@@ -12,34 +12,16 @@ import (
 
 type HomeScene struct {
 	*TaskrunnerGUI
-	isClosed bool
 }
 
 func (taskrunner *TaskrunnerGUI) NewHomeScene() *HomeScene {
-	return &HomeScene{taskrunner, true}
+	return &HomeScene{taskrunner}
 }
 
-func (homeScreen *HomeScene) OnClose() {
-	homeScreen.isClosed = true
-}
-
-func (homeScreen *HomeScene) OnShow() {
-	homeScreen.isClosed = false
-
-	go func(homeScreen *HomeScene) {
-		for {
-			if homeScreen.isClosed {
-				return
-			}
-			select {
-			case <-homeScreen.TaskrunnerGUI.JobStatusChangeChan:
-				gdk.ThreadsEnter()
-				homeScreen.TaskrunnerGUI.RenderScene(homeScreen.TaskrunnerGUI.NewHomeScene()) // todo check still on this screen interface CurrentSceneRendered
-				gdk.ThreadsLeave()
-			default:
-			}
-		}
-	}(homeScreen)
+func (homeScreen *HomeScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
+	gdk.ThreadsEnter()
+	homeScreen.TaskrunnerGUI.RenderScene(homeScreen.TaskrunnerGUI.NewHomeScene())
+	gdk.ThreadsLeave()
 }
 
 func (homeScreen *HomeScene) Title() string {

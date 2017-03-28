@@ -1,9 +1,12 @@
 package main
 
 import (
+	"log"
 	"os"
+	"runtime"
 	"taskrunner-app/taskrunner-gtk/gui"
 	"taskrunner-app/taskrunnerdal"
+	"time"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gtk"
@@ -25,6 +28,8 @@ func main() {
 	taskrunnerApplication = kingpin.New("Taskrunner GUI", "gtk gui for taskrunner")
 	setupApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
+
+	go monitor()
 
 	glib.ThreadInit(nil)
 	gdk.ThreadsInit()
@@ -54,6 +59,17 @@ func setupApplicationFlags() {
 		}
 
 		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir)
-		return err
+		if nil != err {
+			return err
+		}
+
+		return nil
 	})
+}
+
+func monitor() {
+	for {
+		time.Sleep(time.Second)
+		log.Printf("using %d goroutines\n", runtime.NumGoroutine())
+	}
 }

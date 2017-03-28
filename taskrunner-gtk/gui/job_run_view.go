@@ -13,39 +13,21 @@ import (
 
 type JobRunScene struct {
 	*TaskrunnerGUI
-	jobRun   *taskrunner.JobRun
-	isClosed bool
+	jobRun *taskrunner.JobRun
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) NewJobRunScene(jobRun *taskrunner.JobRun) *JobRunScene {
-	return &JobRunScene{taskrunnerGUI, jobRun, true}
+	return &JobRunScene{taskrunnerGUI, jobRun}
 }
 
-func (jobRunScene *JobRunScene) OnClose() {
-	jobRunScene.isClosed = true
-}
+func (jobRunScene *JobRunScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
+	if jobRun.Job.Id != jobRunScene.jobRun.Job.Id || jobRun.Id != jobRunScene.jobRun.Id {
+		return
+	}
+	gdk.ThreadsEnter()
+	jobRunScene.TaskrunnerGUI.RenderScene(jobRunScene.TaskrunnerGUI.NewJobRunScene(jobRun))
+	gdk.ThreadsLeave()
 
-func (jobRunScene *JobRunScene) OnShow() {
-	jobRunScene.isClosed = false
-
-	go func(jobRunScene *JobRunScene) {
-		renderedJobRun := jobRunScene.jobRun
-		for {
-			if jobRunScene.isClosed {
-				return
-			}
-			select {
-			case jobRun := <-jobRunScene.TaskrunnerGUI.JobStatusChangeChan:
-				log.Printf("catching in job run view job run id: %d. Current job id: %d\n", jobRun.Job.Id, renderedJobRun.Id)
-
-				gdk.ThreadsEnter()
-				jobRunScene.TaskrunnerGUI.RenderScene(jobRunScene.TaskrunnerGUI.NewJobRunScene(renderedJobRun)) // todo check still on this screen interface CurrentSceneRendered
-				gdk.ThreadsLeave()
-			default:
-				// non-blocking receive
-			}
-		}
-	}(jobRunScene)
 }
 
 func (jobRunScene *JobRunScene) Title() string {

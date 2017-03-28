@@ -14,37 +14,21 @@ import (
 
 type JobScene struct {
 	*TaskrunnerGUI
-	Job      *taskrunner.Job
-	isClosed bool
+	Job *taskrunner.Job
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) NewJobScene(job *taskrunner.Job) *JobScene {
-	return &JobScene{taskrunnerGUI, job, true}
+	return &JobScene{taskrunnerGUI, job}
 }
 
-func (jobScene *JobScene) OnClose() {
-	jobScene.isClosed = true
-}
+func (jobScene *JobScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
+	if jobRun.Job.Id != jobScene.Job.Id {
+		return
+	}
+	gdk.ThreadsEnter()
+	jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(jobRun.Job)) // todo check still on this screen interface CurrentSceneRendered
+	gdk.ThreadsLeave()
 
-func (jobScene *JobScene) OnShow() {
-	jobScene.isClosed = false
-
-	go func(jobScene *JobScene) {
-		renderedJob := jobScene.Job
-		for {
-			if jobScene.isClosed {
-				return
-			}
-			select {
-			case <-jobScene.TaskrunnerGUI.JobStatusChangeChan:
-				gdk.ThreadsEnter()
-				jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(renderedJob)) // todo check still on this screen interface CurrentSceneRendered
-				gdk.ThreadsLeave()
-			default:
-				// non-blocking receive
-			}
-		}
-	}(jobScene)
 }
 
 func (jobScene *JobScene) Title() string {

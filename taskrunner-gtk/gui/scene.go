@@ -1,12 +1,13 @@
 package gui
 
 import (
+	"taskrunner-app/taskrunner"
+
 	"github.com/mattn/go-gtk/gtk"
 )
 
 type Scene interface {
 	Title() string
 	Content() gtk.IWidget
-	OnClose() // cleanup - ending listening for events
-	OnShow()
+	OnJobRunStatusChange(jobRun *taskrunner.JobRun)
 }

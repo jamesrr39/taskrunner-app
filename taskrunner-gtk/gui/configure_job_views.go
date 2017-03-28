@@ -9,24 +9,18 @@ import (
 
 type EditJobView struct {
 	*TaskrunnerGUI
-	Job      *taskrunner.Job
-	isClosed bool
+	Job *taskrunner.Job
 }
 
 func (taskrunnerGUI *TaskrunnerGUI) NewEditJobView(job *taskrunner.Job) *EditJobView {
-	return &EditJobView{taskrunnerGUI, job, true}
+	return &EditJobView{taskrunnerGUI, job}
+}
+
+func (editJobView *EditJobView) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
 }
 
 func (editJobView *EditJobView) Title() string {
 	return "Editing :: " + editJobView.Job.Name
-}
-
-func (editJobView *EditJobView) OnClose() {
-	editJobView.isClosed = true
-}
-
-func (editJobView *EditJobView) OnShow() {
-	editJobView.isClosed = false
 }
 
 func (editJobView *EditJobView) Content() gtk.IWidget {
