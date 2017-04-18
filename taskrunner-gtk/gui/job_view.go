@@ -1,12 +1,15 @@
 package gui
 
 import (
+	"fmt"
 	"log"
-	"taskrunner-app/taskrunner"
+
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 
 	"strconv"
 	"time"
 
+	"github.com/jamesrr39/taskrunner-app/triggers"
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
@@ -26,7 +29,7 @@ func (jobScene *JobScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) {
 		return
 	}
 	gdk.ThreadsEnter()
-	jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(jobRun.Job)) // todo check still on this screen interface CurrentSceneRendered
+	jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewJobScene(jobRun.Job))
 	gdk.ThreadsLeave()
 
 }
@@ -42,6 +45,7 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	hbox := gtk.NewHBox(true, 0)
 	runButton := gtk.NewButton()
 	runButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	runButton.SetTooltipText("Run Job")
 	runButton.Clicked(func(ctx *glib.CallbackContext) {
 		job, ok := ctx.Data().(*taskrunner.Job)
 		if !ok {
@@ -60,6 +64,7 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 
 	configureButton := gtk.NewButton()
 	configureButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_EDIT, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	configureButton.SetTooltipText("Configure job")
 	configureButton.Clicked(func(ctx *glib.CallbackContext) {
 		jobScene, ok := ctx.Data().(*JobScene)
 		if !ok {
@@ -75,10 +80,32 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	box.PackStart(gtk.NewLabel(jobScene.Job.Description), false, false, 5)
 	box.PackStart(hbox, false, false, 0)
 
+	box.PackStart(jobScene.getCronJobsLabel(), false, false, 0)
+
 	box.PackStart(jobScene.buildListing(), true, true, 5)
 
 	return box
 
+}
+
+func (jobScene *JobScene) getCronJobsLabel() gtk.IWidget {
+
+	// todo linux only?
+	cronJobParser := triggers.NewCronParser(fmt.Sprintf("%s %s", jobScene.TaskrunnerGUI.options.CommandPrefix, jobScene.Job.Name))
+	cronJobs, err := cronJobParser.SearchForJob(jobScene.Job)
+	if nil != err {
+		return gtk.NewLabel(fmt.Sprintf("Error getting cron jobs: %s", err.Error()))
+	}
+
+	if len(cronJobs) == 0 {
+		return gtk.NewLabel("No cron jobs")
+	}
+
+	box := gtk.NewVBox(false, 0)
+	for _, cronJob := range cronJobs {
+		box.PackStart(gtk.NewLabel(cronJob.CronExpression+" "+cronJob.Command), false, false, 0)
+	}
+	return box
 }
 
 func (jobScene *JobScene) buildListing() gtk.IWidget {

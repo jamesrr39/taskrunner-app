@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
 
 	"github.com/alecthomas/kingpin"

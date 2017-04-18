@@ -1,7 +1,7 @@
 package gui
 
 import (
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 
 	"github.com/mattn/go-gtk/gtk"
 )

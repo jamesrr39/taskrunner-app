@@ -10,8 +10,8 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"taskrunner-app/taskexecutor"
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskexecutor"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
 
 	"github.com/bradfitz/slice"

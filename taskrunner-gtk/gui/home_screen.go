@@ -2,7 +2,7 @@ package gui
 
 import (
 	"strconv"
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
 
 	"github.com/mattn/go-gtk/gdk"

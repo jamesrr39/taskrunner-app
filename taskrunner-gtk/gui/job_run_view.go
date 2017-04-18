@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
 
 	"github.com/mattn/go-gtk/gdk"
@@ -27,11 +27,24 @@ func (jobRunScene *JobRunScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) 
 	gdk.ThreadsEnter()
 	jobRunScene.TaskrunnerGUI.RenderScene(jobRunScene.TaskrunnerGUI.NewJobRunScene(jobRun))
 	gdk.ThreadsLeave()
-
 }
 
 func (jobRunScene *JobRunScene) Title() string {
 	return "#" + strconv.FormatUint(jobRunScene.jobRun.Id, 10) + " :: " + jobRunScene.jobRun.Job.Name
+}
+
+func (jobRunScene *JobRunScene) buildSubToolbar() *gtk.HBox {
+	goUpButton := gtk.NewButton()
+	goUpButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	goUpButton.SetTooltipText("Back to Job Overview")
+	goUpButton.Clicked(func() {
+		jobRunScene.TaskrunnerGUI.RenderScene(jobRunScene.TaskrunnerGUI.NewJobScene(jobRunScene.jobRun.Job))
+	})
+
+	hbox := gtk.NewHBox(true, 0)
+	hbox.PackStart(goUpButton, false, false, 0)
+
+	return hbox
 }
 
 func (jobRunScene *JobRunScene) Content() gtk.IWidget {
@@ -40,6 +53,7 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	isFinished := (jobRun.EndTimestamp != 0)
 
 	vbox := gtk.NewVBox(false, 5)
+	vbox.PackStart(jobRunScene.buildSubToolbar(), false, false, 0)
 
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
 
@@ -60,7 +74,6 @@ func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	vbox.PackStart(jobRunScene.buildTextareaScrollWindow(jobRun), true, true, 0)
 
 	return vbox
-
 }
 
 func (jobRunScene *JobRunScene) buildTextareaScrollWindow(jobRun *taskrunner.JobRun) *gtk.ScrolledWindow {

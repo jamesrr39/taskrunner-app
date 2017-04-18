@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
 
 var ErrLockfileAlreadyExists = errors.New("lockfile already exists")

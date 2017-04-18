@@ -4,9 +4,10 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"taskrunner-app/taskrunner-gtk/gui"
-	"taskrunner-app/taskrunnerdal"
 	"time"
+
+	"github.com/jamesrr39/taskrunner-app/taskrunner-gtk/gui"
+	"github.com/jamesrr39/taskrunner-app/taskrunnerdal"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gtk"
@@ -39,7 +40,7 @@ func main() {
 	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
-	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines})
+	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines, "/opt/taskrunner"})
 	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
@@ -74,8 +75,11 @@ func setupApplicationFlags() {
 }
 
 func monitor() {
+	meminfo := runtime.MemStats{}
+
 	for {
 		time.Sleep(time.Second)
-		log.Printf("using %d goroutines (including 1 for monitoring).\n", runtime.NumGoroutine())
+		runtime.ReadMemStats(&meminfo)
+		log.Printf("using %d goroutines (including 1 for monitoring).Memory %d, total: %d\n", runtime.NumGoroutine(), meminfo.Alloc, meminfo.TotalAlloc)
 	}
 }
