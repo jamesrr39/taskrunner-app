@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
-	"taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
 )
 

@@ -2,8 +2,8 @@ package gui
 
 import (
 	"log"
-	"taskrunner-app/taskrunner"
-	"taskrunner-app/taskrunnerdal"
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
+	"github.com/jamesrr39/taskrunner-app/taskrunnerdal"
 
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
