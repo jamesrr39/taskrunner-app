@@ -64,6 +64,8 @@ const (
 )
 
 func rulesFromFile(file io.Reader, filePath string) []*UdevRule {
+	var rules []*UdevRule
+
 	b := bufio.NewScanner(file)
 	for b.Scan() {
 		line := strings.TrimSpace(b.Text())
@@ -71,5 +73,31 @@ func rulesFromFile(file io.Reader, filePath string) []*UdevRule {
 			continue
 		}
 
+		idVendor := getValueForProperty(line, idVendorKey)
+		idProduct := getValueForProperty(line, idProductKey)
+		runCommand := getValueForProperty(line, runKey)
+
+		if "" != idVendor || "" != idProduct || "" != runCommand {
+			continue
+		}
+
+		rules = append(rules, NewUdevRule(idVendor, idProduct, runCommand, filePath))
 	}
+
+	return rules
+}
+
+func getValueForProperty(line string, key string) string {
+	propertyKeyIndex := strings.Index(line, key)
+	if -1 == propertyKeyIndex {
+		return ""
+	}
+
+	propertyValueIndex := propertyKeyIndex + len(key)
+	propertyValueEndIndex := strings.Index(line[propertyValueIndex+1:], "\"") - 1
+	if 0 > propertyValueEndIndex {
+		return ""
+	}
+
+	return line[propertyValueIndex+1 : propertyValueEndIndex-1]
 }
