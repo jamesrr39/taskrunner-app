@@ -10,9 +10,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"time"
+
 	"github.com/jamesrr39/taskrunner-app/taskexecutor"
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
-	"time"
 
 	"github.com/bradfitz/slice"
 )
@@ -27,6 +28,7 @@ func NewJobRunsDAL(jobDAL *JobDAL) *JobRunsDAL {
 
 // CreateAndRun creates a new job run and runs it.
 // It is synchronous (the method returns when it has either completed or failed).
+// jobRunStatusChangeExternalChan can be nil if there is no outside process listening for changes
 func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStatusChangeExternalChan chan *taskrunner.JobRun) error {
 	if jobRun.Id != 0 {
 		return fmt.Errorf("expected the jobRun to have an Id of 0 but had %d", jobRun.Id)
@@ -98,8 +100,9 @@ func (jobRunsDAL *JobRunsDAL) listenAndTriggerSendToJobRunStatusChan(
 		if nil != err {
 			log.Printf("ERROR: couldn't write job run %d for job '%s' (id: %d) to file. Error: %s\n", jobRun.Id, jobRun.Job.Name, jobRun.Job.Id, err)
 		}
-
-		jobRunStatusChangeExternalChan <- jobRun
+		if nil != jobRunStatusChangeExternalChan {
+			jobRunStatusChangeExternalChan <- jobRun
+		}
 		if jobRun.State.IsFinished() {
 			return
 		}

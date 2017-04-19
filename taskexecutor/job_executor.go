@@ -5,8 +5,9 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
-	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
+
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
 
 const TASKRUNNER_SOURCE_NAME string = "TASKRUNNER"

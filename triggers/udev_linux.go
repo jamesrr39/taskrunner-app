@@ -60,7 +60,7 @@ func (u *UdevRulesDAL) GetRules() ([]*UdevRule, error) {
 const (
 	idVendorKey  = "ATTRS{idVendor}=="
 	idProductKey = "ATTRS{idProduct}=="
-	runKey       = "RUN="
+	runKey       = "RUN+="
 )
 
 func rulesFromFile(file io.Reader, filePath string) []*UdevRule {
@@ -76,8 +76,7 @@ func rulesFromFile(file io.Reader, filePath string) []*UdevRule {
 		idVendor := getValueForProperty(line, idVendorKey)
 		idProduct := getValueForProperty(line, idProductKey)
 		runCommand := getValueForProperty(line, runKey)
-
-		if "" != idVendor || "" != idProduct || "" != runCommand {
+		if "" == idVendor || "" == idProduct || "" == runCommand {
 			continue
 		}
 
@@ -92,12 +91,12 @@ func getValueForProperty(line string, key string) string {
 	if -1 == propertyKeyIndex {
 		return ""
 	}
+	propertyValueIndex := propertyKeyIndex + len(key) + strings.Index(line[propertyKeyIndex+len(key):], "\"") + 1 // chop off leading quotation
 
-	propertyValueIndex := propertyKeyIndex + len(key)
-	propertyValueEndIndex := strings.Index(line[propertyValueIndex+1:], "\"") - 1
+	propertyValueEndIndex := propertyValueIndex + strings.Index(line[propertyValueIndex:], "\"")
 	if 0 > propertyValueEndIndex {
 		return ""
 	}
 
-	return line[propertyValueIndex+1 : propertyValueEndIndex-1]
+	return line[propertyValueIndex:propertyValueEndIndex]
 }
