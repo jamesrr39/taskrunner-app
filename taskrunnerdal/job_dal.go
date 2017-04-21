@@ -133,7 +133,7 @@ func (jobDAL *JobDAL) save(job *taskrunner.Job) error {
 	if nil != err {
 		return err
 	}
-	log.Printf("writing to %s\n", filepath.Join(jobFolderPath, "config.json"))
+
 	return ioutil.WriteFile(filepath.Join(jobFolderPath, "config.json"), fileBytes, 0600)
 }
 

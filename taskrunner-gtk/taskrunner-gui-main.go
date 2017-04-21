@@ -37,7 +37,7 @@ const (
 func main() {
 
 	taskrunnerApplication = kingpin.New("Taskrunner GUI", "gtk gui for taskrunner")
-	setupApplicationFlags()
+	parseApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
 
 	if *shouldMonitor {
@@ -78,7 +78,7 @@ func guiMain() {
 	gtk.Main()
 }
 
-func setupApplicationFlags() {
+func parseApplicationFlags() {
 	taskrunnerDir := taskrunnerApplication.
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
 		Default("~/.local/share/github.com/jamesrr39/taskrunner-app").

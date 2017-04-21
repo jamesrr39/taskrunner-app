@@ -3,10 +3,14 @@ package triggers
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
 
 type UdevRulesDAL struct {
@@ -28,7 +32,7 @@ func NewUdevRule(idVendor, idProduct, run, fileDefinedIn string) *UdevRule {
 	return &UdevRule{idVendor, idProduct, run, fileDefinedIn}
 }
 
-func (u *UdevRulesDAL) GetRules() ([]*UdevRule, error) {
+func (u *UdevRulesDAL) GetRules(job *taskrunner.Job) ([]*UdevRule, error) {
 	var rules []*UdevRule
 
 	err := filepath.Walk(u.BaseDir, func(path string, fileInfo os.FileInfo, err error) error {
@@ -45,8 +49,8 @@ func (u *UdevRulesDAL) GetRules() ([]*UdevRule, error) {
 			return err
 		}
 		defer file.Close()
-
-		rules = append(rules, rulesFromFile(file, path)...)
+		log.Printf("looking in %s\n", path)
+		rules = append(rules, rulesFromFile(file, path, job)...)
 		return nil
 	})
 
@@ -63,12 +67,12 @@ const (
 	runKey       = "RUN+="
 )
 
-func rulesFromFile(file io.Reader, filePath string) []*UdevRule {
+func rulesFromFile(file io.Reader, filePath string, job *taskrunner.Job) []*UdevRule {
 	var rules []*UdevRule
 
-	b := bufio.NewScanner(file)
-	for b.Scan() {
-		line := strings.TrimSpace(b.Text())
+	fileScanner := bufio.NewScanner(file)
+	for fileScanner.Scan() {
+		line := strings.TrimSpace(fileScanner.Text())
 		if strings.HasPrefix(line, "#") {
 			continue
 		}
@@ -76,7 +80,7 @@ func rulesFromFile(file io.Reader, filePath string) []*UdevRule {
 		idVendor := getValueForProperty(line, idVendorKey)
 		idProduct := getValueForProperty(line, idProductKey)
 		runCommand := getValueForProperty(line, runKey)
-		if "" == idVendor || "" == idProduct || "" == runCommand {
+		if "" == idVendor || "" == idProduct || !strings.Contains(runCommand, fmt.Sprintf("--run-job='%s'", job.Name)) {
 			continue
 		}
 

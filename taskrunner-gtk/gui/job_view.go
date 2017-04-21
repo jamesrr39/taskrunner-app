@@ -40,9 +40,33 @@ func (jobScene *JobScene) Title() string {
 
 func (jobScene *JobScene) Content() gtk.IWidget {
 
-	box := gtk.NewVBox(false, 5)
+	commandsVBox := gtk.NewVBox(false, 0)
+	commandsVBox.PackStart(jobScene.buildRunButton(), false, false, 0)
+	commandsVBox.PackStart(jobScene.buildConfigureButton(), false, false, 0)
 
-	hbox := gtk.NewHBox(true, 0)
+	var descriptionText string
+	if "" == jobScene.Job.Description {
+		descriptionText = "(No description)"
+	} else {
+		descriptionText = jobScene.Job.Description
+	}
+
+	jobSummaryVBox := gtk.NewVBox(false, 0)
+	jobSummaryVBox.PackStart(gtk.NewLabel(descriptionText), false, false, 5)
+	jobSummaryVBox.PackStart(jobScene.buildTriggersVBox(), false, false, 0)
+
+	topHbox := gtk.NewHBox(true, 5)
+	topHbox.PackStart(commandsVBox, false, false, 0)
+	topHbox.PackStart(jobSummaryVBox, true, true, 0)
+
+	box := gtk.NewVBox(false, 5)
+	box.PackStart(topHbox, false, false, 0)
+	box.PackStart(jobScene.buildListing(), true, true, 0)
+	return box
+
+}
+
+func (jobScene *JobScene) buildRunButton() gtk.IWidget {
 	runButton := gtk.NewButton()
 	runButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_MEDIA_PLAY, gtk.ICON_SIZE_LARGE_TOOLBAR))
 	runButton.SetTooltipText("Run Job")
@@ -62,6 +86,13 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 		}(job, jobScene.TaskrunnerGUI)
 	}, jobScene.Job)
 
+	hbox := gtk.NewHBox(false, 5)
+	hbox.PackStart(runButton, false, false, 0)
+	hbox.PackStart(gtk.NewLabel("Run"), false, false, 0)
+	return hbox
+}
+
+func (jobScene *JobScene) buildConfigureButton() gtk.IWidget {
 	configureButton := gtk.NewButton()
 	configureButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_EDIT, gtk.ICON_SIZE_LARGE_TOOLBAR))
 	configureButton.SetTooltipText("Configure job")
@@ -74,40 +105,55 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewEditJobView(jobScene.Job))
 	}, jobScene)
 
-	hbox.PackStart(runButton, false, false, 0)
-	hbox.PackEnd(configureButton, false, false, 0)
-
-	box.PackStart(gtk.NewLabel(jobScene.Job.Description), false, false, 5)
-	box.PackStart(hbox, false, false, 0)
-
-	box.PackStart(jobScene.getCronJobsLabel(), false, false, 0)
-
-	box.PackStart(jobScene.buildListing(), true, true, 5)
-
-	return box
-
+	hbox := gtk.NewHBox(false, 5)
+	hbox.PackStart(configureButton, false, false, 0)
+	hbox.PackStart(gtk.NewLabel("Configure"), false, false, 0)
+	return hbox
 }
 
-func (jobScene *JobScene) getCronJobsLabel() gtk.IWidget {
+func (jobScene *JobScene) buildTriggersVBox() *gtk.VBox {
+	vbox := gtk.NewVBox(false, 0)
+	vbox.PackStart(jobScene.buildCronJobsSummary(), false, false, 0)
+	vbox.PackStart(jobScene.buildUdevJobsSummary(), false, false, 0)
+	return vbox
+}
 
-	// todo linux only?
+func (jobScene *JobScene) buildUdevJobsSummary() gtk.IWidget {
+	udevDAL := triggers.NewUdevRulesDAL("/etc/udev/rules.d")
+	rules, err := udevDAL.GetRules(jobScene.Job)
+	if nil != err {
+		return gtk.NewLabel(fmt.Sprintf("Error getting Udev rules: %s", err))
+	}
+
+	if 0 == len(rules) {
+		return gtk.NewLabel("No Udev rules")
+	}
+
+	vbox := gtk.NewVBox(false, 0)
+	vbox.PackStart(gtk.NewLabel("This rule triggers:"), false, false, 0)
+	for _, rule := range rules {
+		vbox.PackStart(gtk.NewLabel(fmt.Sprintf("idVendor %s, idProduct %s", rule.IdVendor, rule.IdProduct)), false, false, 0)
+	}
+	return vbox
+}
+
+func (jobScene *JobScene) buildCronJobsSummary() gtk.IWidget {
 	cronJobParser := triggers.NewCronParser(fmt.Sprintf("%s %s", jobScene.TaskrunnerGUI.options.CommandPrefix, jobScene.Job.Name))
 	cronJobs, err := cronJobParser.SearchForJob(jobScene.Job)
 	if nil != err {
-		return gtk.NewLabel(fmt.Sprintf("Error getting cron jobs: %s", err.Error()))
+		return gtk.NewLabel(fmt.Sprintf("Error getting cron jobs: %s", err))
 	}
 
-	if len(cronJobs) == 0 {
+	if 0 == len(cronJobs) {
 		return gtk.NewLabel("No cron jobs")
 	}
 
-	box := gtk.NewVBox(false, 0)
+	vbox := gtk.NewVBox(false, 0)
 	for _, cronJob := range cronJobs {
-		box.PackStart(gtk.NewLabel(cronJob.CronExpression+" "+cronJob.Command), false, false, 0)
+		vbox.PackStart(gtk.NewLabel(cronJob.CronExpression+" "+cronJob.Command), false, false, 0)
 	}
-	return box
+	return vbox
 }
-
 func (jobScene *JobScene) buildListing() gtk.IWidget {
 	var listing gtk.IWidget
 
