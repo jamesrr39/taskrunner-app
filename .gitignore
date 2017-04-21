@@ -1,5 +1,4 @@
 # liteide
-/taskrunner-cli/taskrunner-cli
-/taskrunner-gtk/taskrunner-gtk
+/taskrunner-app
 
 res/testconfig/jobs/test_job/runs
