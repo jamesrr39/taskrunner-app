@@ -5,8 +5,9 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
-	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
+
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
 
 const TASKRUNNER_SOURCE_NAME string = "TASKRUNNER"
@@ -40,7 +41,6 @@ func ExecuteJobRun(jobRun *taskrunner.JobRun, jobRunStatusChangeChan chan *taskr
 		handleTaskrunnerError("Couldn't start script. Error: "+err.Error(), logFile, jobRunStatusChangeChan, jobRun)
 		return
 	}
-
 	err = cmd.Wait()
 	if nil != err {
 		switch err.(type) {
@@ -52,7 +52,6 @@ func ExecuteJobRun(jobRun *taskrunner.JobRun, jobRunStatusChangeChan chan *taskr
 	} else {
 		jobRun.State = taskrunner.JOB_RUN_STATE_SUCCESS
 	}
-
 	jobRun.EndTimestamp = time.Now().Unix()
 	jobRunStatusChangeChan <- jobRun
 

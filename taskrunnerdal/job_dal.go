@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
 
@@ -60,6 +61,20 @@ func (jobDAL *JobDAL) GetAll() ([]*taskrunner.Job, error) {
 		}
 	}
 	return jobs, nil
+}
+
+func (jobDAL *JobDAL) GetJobByName(name string) (*taskrunner.Job, error) {
+	allJobs, err := jobDAL.GetAll()
+	if nil != err {
+		return nil, err
+	}
+
+	for _, job := range allJobs {
+		if job.Name == name {
+			return job, nil
+		}
+	}
+	return nil, fmt.Errorf("couldn't find job with name: '%s'", name)
 }
 
 func (jobDAL *JobDAL) Create(job *taskrunner.Job) error {
@@ -118,7 +133,7 @@ func (jobDAL *JobDAL) save(job *taskrunner.Job) error {
 	if nil != err {
 		return err
 	}
-	log.Printf("writing to %s\n", filepath.Join(jobFolderPath, "config.json"))
+
 	return ioutil.WriteFile(filepath.Join(jobFolderPath, "config.json"), fileBytes, 0600)
 }
 
