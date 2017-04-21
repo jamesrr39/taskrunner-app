@@ -3,7 +3,6 @@ package taskexecutor
 import (
 	"io"
 	"io/ioutil"
-	"log"
 	"os/exec"
 	"path/filepath"
 	"time"
@@ -42,7 +41,6 @@ func ExecuteJobRun(jobRun *taskrunner.JobRun, jobRunStatusChangeChan chan *taskr
 		handleTaskrunnerError("Couldn't start script. Error: "+err.Error(), logFile, jobRunStatusChangeChan, jobRun)
 		return
 	}
-	log.Println("starting external program")
 	err = cmd.Wait()
 	if nil != err {
 		switch err.(type) {
@@ -54,7 +52,6 @@ func ExecuteJobRun(jobRun *taskrunner.JobRun, jobRunStatusChangeChan chan *taskr
 	} else {
 		jobRun.State = taskrunner.JOB_RUN_STATE_SUCCESS
 	}
-	log.Printf("jobRun state: %s\n", jobRun.State)
 	jobRun.EndTimestamp = time.Now().Unix()
 	jobRunStatusChangeChan <- jobRun
 
