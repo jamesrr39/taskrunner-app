@@ -1,7 +1,6 @@
 package gui
 
 import (
-	"log"
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/jamesrr39/taskrunner-app/taskrunnerdal"
 
@@ -48,7 +47,6 @@ func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, options Taskru
 	go func() {
 		for {
 			jobRun := <-taskrunnerGUI.JobStatusChangeChan
-			log.Printf("got job run state update, now %s\n", jobRun.State)
 			taskrunnerGUI.PaneContent.OnJobRunStatusChange(jobRun)
 		}
 	}()

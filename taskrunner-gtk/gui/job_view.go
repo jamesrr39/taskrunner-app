@@ -55,8 +55,8 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	jobSummaryVBox.PackStart(gtk.NewLabel(descriptionText), false, false, 5)
 	jobSummaryVBox.PackStart(jobScene.buildTriggersVBox(), false, false, 0)
 
-	topHbox := gtk.NewHBox(true, 5)
-	topHbox.PackStart(commandsVBox, false, false, 0)
+	topHbox := gtk.NewHBox(false, 5)
+	topHbox.PackStart(commandsVBox, false, false, 30)
 	topHbox.PackStart(jobSummaryVBox, true, true, 0)
 
 	box := gtk.NewVBox(false, 5)
