@@ -8,11 +8,13 @@ The idea is to have a tool that looks after your repetitive tasks, and stores th
 
 ## Install
 
-You need to have Go and GTK 2 installed before running `go get` on this.
+First, you need to have Go and GTK 2 installed.
 
 Installing GTK on ubuntu:
 
     sudo apt install build-essential libgtk2.0-dev
+
+Then `git clone`, and `glide install` to install dependencies.
 
 ## Run
 

@@ -41,6 +41,7 @@ func (jobScene *JobScene) Title() string {
 func (jobScene *JobScene) Content() gtk.IWidget {
 
 	commandsVBox := gtk.NewVBox(false, 0)
+	commandsVBox.PackStart(jobScene.buildGoUpButton(), false, false, 0)
 	commandsVBox.PackStart(jobScene.buildRunButton(), false, false, 0)
 	commandsVBox.PackStart(jobScene.buildConfigureButton(), false, false, 0)
 
@@ -64,6 +65,23 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	box.PackStart(jobScene.buildListing(), true, true, 0)
 	return box
 
+}
+
+func (jobScene *JobScene) buildGoUpButton() gtk.IWidget {
+	text := "Back to Home"
+
+	goUpButton := gtk.NewButton()
+	goUpButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	goUpButton.SetTooltipText(text)
+	goUpButton.Clicked(func() {
+		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewHomeScene())
+	})
+
+	goUpHbox := gtk.NewHBox(false, 5)
+	goUpHbox.PackStart(goUpButton, false, false, 0)
+	goUpHbox.PackStart(gtk.NewLabel(text), false, false, 0)
+
+	return goUpHbox
 }
 
 func (jobScene *JobScene) buildRunButton() gtk.IWidget {

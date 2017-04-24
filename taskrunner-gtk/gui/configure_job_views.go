@@ -24,8 +24,12 @@ func (editJobView *EditJobView) Title() string {
 }
 
 func (editJobView *EditJobView) Content() gtk.IWidget {
-	vbox := gtk.NewVBox(false, 0)
 
+	topHbox := gtk.NewHBox(false, 0)
+	topHbox.PackStart(editJobView.buildGoUpButton(), false, false, 30)
+
+	vbox := gtk.NewVBox(false, 0)
+	vbox.PackStart(topHbox, false, false, 0)
 	// editing table
 	editJobTableEntries := editJobView.TaskrunnerGUI.NewConfigureJobTableEntries(editJobView.Job)
 
@@ -61,4 +65,21 @@ func (editJobView *EditJobView) Content() gtk.IWidget {
 	vbox.PackEnd(saveButton, false, false, 0)
 
 	return vbox
+}
+
+func (editJobView *EditJobView) buildGoUpButton() gtk.IWidget {
+	text := "Back to Job Overview (discard changes)"
+
+	goUpButton := gtk.NewButton()
+	goUpButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	goUpButton.SetTooltipText(text)
+	goUpButton.Clicked(func() {
+		editJobView.TaskrunnerGUI.RenderScene(editJobView.TaskrunnerGUI.NewJobScene(editJobView.Job))
+	})
+
+	goUpHbox := gtk.NewHBox(false, 5)
+	goUpHbox.PackStart(goUpButton, false, false, 0)
+	goUpHbox.PackStart(gtk.NewLabel(text), false, false, 0)
+
+	return goUpHbox
 }
