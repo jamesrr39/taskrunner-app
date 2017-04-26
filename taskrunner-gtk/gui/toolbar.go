@@ -22,8 +22,7 @@ func buildToolbar(taskrunnerGUI *TaskrunnerGUI) gtk.IWidget {
 		if nil != err {
 			panic(err)
 		}
-		taskrunnerGUI.RenderScene(taskrunnerGUI.NewEditJobView(newJob))
-
+		taskrunnerGUI.RenderScene(taskrunnerGUI.NewEditJobView(newJob, taskrunnerGUI.udevRulesDAL))
 	})
 
 	hbox := gtk.NewHBox(false, 0)

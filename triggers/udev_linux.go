@@ -13,6 +13,12 @@ import (
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
 
+const (
+	idVendorKey  = "ATTRS{idVendor}=="
+	idProductKey = "ATTRS{idProduct}=="
+	runKey       = "RUN+="
+)
+
 type UdevRulesDAL struct {
 	BaseDir string // /etc/udev/rules.d
 }
@@ -60,12 +66,6 @@ func (u *UdevRulesDAL) GetRules(job *taskrunner.Job) ([]*UdevRule, error) {
 
 	return rules, nil
 }
-
-const (
-	idVendorKey  = "ATTRS{idVendor}=="
-	idProductKey = "ATTRS{idProduct}=="
-	runKey       = "RUN+="
-)
 
 func rulesFromFile(file io.Reader, filePath string, job *taskrunner.Job) []*UdevRule {
 	var rules []*UdevRule

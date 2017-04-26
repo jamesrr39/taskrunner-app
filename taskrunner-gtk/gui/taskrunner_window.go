@@ -3,6 +3,7 @@ package gui
 import (
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/jamesrr39/taskrunner-app/taskrunnerdal"
+	"github.com/jamesrr39/taskrunner-app/triggers"
 
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
@@ -18,9 +19,10 @@ type TaskrunnerGUI struct {
 	JobStatusChangeChan chan *taskrunner.JobRun // job runs
 	titleLabel          *gtk.Label
 	options             TaskrunnerGUIOptions
+	udevRulesDAL        *triggers.UdevRulesDAL
 }
 
-func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, options TaskrunnerGUIOptions) *TaskrunnerGUI {
+func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, udevRulesDAL *triggers.UdevRulesDAL, options TaskrunnerGUIOptions) *TaskrunnerGUI {
 
 	window := gtk.NewWindow(gtk.WINDOW_TOPLEVEL)
 	window.SetSizeRequest(800, 600)
@@ -42,6 +44,7 @@ func NewTaskrunnerGUI(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, options Taskru
 		JobStatusChangeChan: make(chan *taskrunner.JobRun),
 		titleLabel:          titleLabel,
 		options:             options,
+		udevRulesDAL:        udevRulesDAL,
 	}
 
 	go func() {

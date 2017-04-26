@@ -120,7 +120,7 @@ func (jobScene *JobScene) buildConfigureButton() gtk.IWidget {
 			panic("couldn't convert to job")
 		}
 
-		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewEditJobView(jobScene.Job))
+		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewEditJobView(jobScene.Job, jobScene.TaskrunnerGUI.udevRulesDAL))
 	}, jobScene)
 
 	hbox := gtk.NewHBox(false, 5)
@@ -137,14 +137,13 @@ func (jobScene *JobScene) buildTriggersVBox() *gtk.VBox {
 }
 
 func (jobScene *JobScene) buildUdevJobsSummary() gtk.IWidget {
-	udevDAL := triggers.NewUdevRulesDAL("/etc/udev/rules.d")
-	rules, err := udevDAL.GetRules(jobScene.Job)
+	rules, err := jobScene.TaskrunnerGUI.udevRulesDAL.GetRules(jobScene.Job)
 	if nil != err {
 		return gtk.NewLabel(fmt.Sprintf("Error getting Udev rules: %s", err))
 	}
 
 	if 0 == len(rules) {
-		return gtk.NewLabel("No Udev rules")
+		return gtk.NewLabel("No udev rules trigger this job")
 	}
 
 	vbox := gtk.NewVBox(false, 0)
@@ -163,7 +162,7 @@ func (jobScene *JobScene) buildCronJobsSummary() gtk.IWidget {
 	}
 
 	if 0 == len(cronJobs) {
-		return gtk.NewLabel("No cron jobs")
+		return gtk.NewLabel("No cron jobs trigger this job")
 	}
 
 	vbox := gtk.NewVBox(false, 0)

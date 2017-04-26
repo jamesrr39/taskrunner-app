@@ -10,6 +10,7 @@ import (
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/jamesrr39/taskrunner-app/taskrunner-gtk/gui"
 	"github.com/jamesrr39/taskrunner-app/taskrunnerdal"
+	"github.com/jamesrr39/taskrunner-app/triggers"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gdk"
@@ -72,7 +73,8 @@ func guiMain() {
 	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
-	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines, "/opt/taskrunner"})
+	udevDAL := triggers.NewUdevRulesDAL("/etc/udev/rules.d")
+	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, udevDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines, "/opt/taskrunner"}) // todo mock
 	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
