@@ -5,7 +5,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,7 +54,7 @@ func (u *UdevRulesDAL) GetRules(job *taskrunner.Job) ([]*UdevRule, error) {
 			return err
 		}
 		defer file.Close()
-		log.Printf("looking in %s\n", path)
+
 		rules = append(rules, rulesFromFile(file, path, job)...)
 		return nil
 	})
