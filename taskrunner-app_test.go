@@ -11,18 +11,19 @@ import (
 )
 
 func Test_runJobHeadlessMain(t *testing.T) {
+	// create data dir and defer cleaning up data dir
 	dataDirBase, err := ioutil.TempDir("", "")
 	assert.Nil(t, err)
-	/*
-		defer func() {
-			err := os.RemoveAll(dataDirBase)
-			if nil != err {
-				t.Errorf("Couldn't remove the tempdir at '%s'. Error: %s.\n", dataDirBase, err)
-			} else {
-				t.Logf("Successfully removed data dir at %s\n", dataDirBase)
-			}
-		}()
-	*/
+	defer func() {
+		err := os.RemoveAll(dataDirBase)
+		if nil != err {
+			t.Errorf("Couldn't remove the tempdir at '%s'. Error: %s.\n", dataDirBase, err)
+		} else {
+			t.Logf("Successfully removed data dir at %s\n", dataDirBase)
+		}
+	}()
+
+	// create dal and job
 	dal, err := taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(dataDirBase, mockNowProvider)
 	assert.Nil(t, err)
 
@@ -34,6 +35,7 @@ echo 'test run'
 	err = dal.JobDAL.Create(job)
 	assert.Nil(t, err)
 
+	// run job and assertions
 	runJobHeadlessMain(dal, "system test job", "system test")
 
 	runs, err := dal.JobRunsDAL.GetAllForJob(job)
