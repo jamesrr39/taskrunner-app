@@ -36,7 +36,6 @@ const (
 )
 
 func main() {
-
 	taskrunnerApplication = kingpin.New("Taskrunner GUI", "gtk gui for taskrunner")
 	parseApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
@@ -49,11 +48,11 @@ func main() {
 	case ApplicationModeGUI:
 		guiMain()
 	case ApplicationModeRunJobHeadless:
-		runJobHeadlessMain(*headlessJobNameArg, *headlessTriggerNameArg)
+		runJobHeadlessMain(taskrunnerDAL, *headlessJobNameArg, *headlessTriggerNameArg)
 	}
 }
 
-func runJobHeadlessMain(jobName string, trigger string) {
+func runJobHeadlessMain(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, jobName string, trigger string) {
 	job, err := taskrunnerDAL.GetJobByName(jobName)
 	if nil != err {
 		log.Fatalf("Error finding job with name: '%s'. Error: %s\n", jobName, err)
@@ -108,7 +107,7 @@ func parseApplicationFlags() {
 			return err
 		}
 
-		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir)
+		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir, providesNow)
 		if nil != err {
 			return err
 		}
@@ -125,4 +124,8 @@ func monitor() {
 		runtime.ReadMemStats(&meminfo)
 		log.Printf("using %d goroutines (including 1 for monitoring).Memory %d, total: %d\n", runtime.NumGoroutine(), meminfo.Alloc, meminfo.TotalAlloc)
 	}
+}
+
+func providesNow() time.Time {
+	return time.Now()
 }

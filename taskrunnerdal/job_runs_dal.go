@@ -19,11 +19,12 @@ import (
 )
 
 type JobRunsDAL struct {
-	jobDAL *JobDAL
+	jobDAL      *JobDAL
+	nowProvider taskexecutor.NowProvider
 }
 
-func NewJobRunsDAL(jobDAL *JobDAL) *JobRunsDAL {
-	return &JobRunsDAL{jobDAL}
+func NewJobRunsDAL(jobDAL *JobDAL, nowProvider taskexecutor.NowProvider) *JobRunsDAL {
+	return &JobRunsDAL{jobDAL, nowProvider}
 }
 
 // CreateAndRun creates a new job run and runs it.
@@ -33,7 +34,7 @@ func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStat
 	if jobRun.Id != 0 {
 		return fmt.Errorf("expected the jobRun to have an Id of 0 but had %d", jobRun.Id)
 	}
-
+	log.Println("IN JOB RUN CREATE AND RUN")
 	jobRunStatusChanInternalChan := make(chan *taskrunner.JobRun)
 
 	go jobRunsDAL.listenAndTriggerSendToJobRunStatusChan(jobRunStatusChanInternalChan, jobRunStatusChangeExternalChan, jobRun)
@@ -84,7 +85,10 @@ func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStat
 		return err
 	}
 
-	taskexecutor.ExecuteJobRun(jobRun, jobRunStatusChanInternalChan, logFile, jobRunsDAL.jobDAL.getWorkspaceDir(jobRun.Job))
+	err = taskexecutor.ExecuteJobRun(jobRun, jobRunStatusChanInternalChan, logFile, jobRunsDAL.jobDAL.getWorkspaceDir(jobRun.Job), jobRunsDAL.nowProvider)
+	if nil != err {
+		return err
+	}
 
 	return nil
 }
