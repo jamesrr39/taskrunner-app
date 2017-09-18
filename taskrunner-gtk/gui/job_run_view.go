@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
+
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/gtk"
@@ -33,47 +34,66 @@ func (jobRunScene *JobRunScene) Title() string {
 	return "#" + strconv.FormatUint(jobRunScene.jobRun.Id, 10) + " :: " + jobRunScene.jobRun.Job.Name
 }
 
-func (jobRunScene *JobRunScene) buildSubToolbar() *gtk.HBox {
+func (jobRunScene *JobRunScene) buildJobRunViewActionsBox() *gtk.VBox {
+	text := "Back to Job Overview"
+
 	goUpButton := gtk.NewButton()
 	goUpButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_LARGE_TOOLBAR))
-	goUpButton.SetTooltipText("Back to Job Overview")
+	goUpButton.SetTooltipText(text)
 	goUpButton.Clicked(func() {
 		jobRunScene.TaskrunnerGUI.RenderScene(jobRunScene.TaskrunnerGUI.NewJobScene(jobRunScene.jobRun.Job))
 	})
 
-	hbox := gtk.NewHBox(true, 0)
-	hbox.PackStart(goUpButton, false, false, 0)
+	goUpHbox := gtk.NewHBox(false, 5)
+	goUpHbox.PackStart(goUpButton, false, false, 0)
+	goUpHbox.PackStart(gtk.NewLabel(text), false, false, 0)
 
-	return hbox
+	vbox := gtk.NewVBox(false, 0)
+	vbox.PackStart(goUpHbox, false, false, 0)
+
+	return vbox
 }
 
 func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	jobRun := jobRunScene.jobRun
 
-	isFinished := (jobRun.EndTimestamp != 0)
+	vbox := gtk.NewVBox(false, 0)
+	vbox.PackStart(jobRunScene.buildTopBox(), false, false, 0)
+	vbox.PackStart(gtk.NewLabel("Console Output:"), false, false, 0)
+	vbox.PackStart(jobRunScene.buildTextareaScrollWindow(jobRun), true, true, 0)
 
-	vbox := gtk.NewVBox(false, 5)
-	vbox.PackStart(jobRunScene.buildSubToolbar(), false, false, 0)
+	return vbox
+}
 
+func (jobRunScene *JobRunScene) buildTopBox() gtk.IBox {
+	jobRun := jobRunScene.jobRun
 	startDateTime := time.Unix(jobRun.StartTimestamp, 0)
 
-	vbox.PackStart(gtk.NewLabel("Started: "+startDateTime.String()+" ("+GetTimeAgo(startDateTime)+" ago)"), false, false, 0)
+	jobRunSummaryVbox := gtk.NewVBox(false, 0)
+	triggerText := jobRun.Trigger
+	if "" == triggerText {
+		triggerText = "(No trigger)"
+	} else {
+		triggerText = "'" + triggerText + "'"
+	}
+	jobRunSummaryVbox.PackStart(gtk.NewLabel(fmt.Sprintf("Triggered by %s at %s (%s ago)", triggerText, startDateTime.Format(time.RFC822), GetTimeAgo(startDateTime))), false, false, 0)
 
 	var durationStr string
+	isFinished := (jobRun.EndTimestamp != 0)
+
 	if !isFinished {
 		durationStr = "Running for " + GetTimeAgo(startDateTime)
 	} else {
 		durationStr = "Ran for " + time.Unix(jobRun.EndTimestamp, 0).Sub(startDateTime).String()
 	}
 
-	vbox.PackStart(gtk.NewLabel(durationStr), false, false, 0)
+	jobRunSummaryVbox.PackStart(gtk.NewLabel(durationStr), false, false, 0)
+	jobRunSummaryVbox.PackStart(gtk.NewLabel(jobRun.State.String()), false, false, 0)
 
-	vbox.PackStart(gtk.NewLabel(jobRun.State.String()), false, false, 0)
-
-	vbox.PackStart(gtk.NewLabel("Console Output:"), false, false, 0)
-	vbox.PackStart(jobRunScene.buildTextareaScrollWindow(jobRun), true, true, 0)
-
-	return vbox
+	topHbox := gtk.NewHBox(false, 5)
+	topHbox.PackStart(jobRunScene.buildJobRunViewActionsBox(), false, false, 30)
+	topHbox.PackStart(jobRunSummaryVbox, true, true, 0)
+	return topHbox
 }
 
 func (jobRunScene *JobRunScene) buildTextareaScrollWindow(jobRun *taskrunner.JobRun) *gtk.ScrolledWindow {

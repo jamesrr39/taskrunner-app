@@ -41,6 +41,7 @@ func (jobScene *JobScene) Title() string {
 func (jobScene *JobScene) Content() gtk.IWidget {
 
 	commandsVBox := gtk.NewVBox(false, 0)
+	commandsVBox.PackStart(jobScene.buildGoUpButton(), false, false, 0)
 	commandsVBox.PackStart(jobScene.buildRunButton(), false, false, 0)
 	commandsVBox.PackStart(jobScene.buildConfigureButton(), false, false, 0)
 
@@ -55,8 +56,8 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	jobSummaryVBox.PackStart(gtk.NewLabel(descriptionText), false, false, 5)
 	jobSummaryVBox.PackStart(jobScene.buildTriggersVBox(), false, false, 0)
 
-	topHbox := gtk.NewHBox(true, 5)
-	topHbox.PackStart(commandsVBox, false, false, 0)
+	topHbox := gtk.NewHBox(false, 5)
+	topHbox.PackStart(commandsVBox, false, false, 30)
 	topHbox.PackStart(jobSummaryVBox, true, true, 0)
 
 	box := gtk.NewVBox(false, 5)
@@ -64,6 +65,23 @@ func (jobScene *JobScene) Content() gtk.IWidget {
 	box.PackStart(jobScene.buildListing(), true, true, 0)
 	return box
 
+}
+
+func (jobScene *JobScene) buildGoUpButton() gtk.IWidget {
+	text := "Back to Home"
+
+	goUpButton := gtk.NewButton()
+	goUpButton.SetImage(gtk.NewImageFromStock(gtk.STOCK_GO_UP, gtk.ICON_SIZE_LARGE_TOOLBAR))
+	goUpButton.SetTooltipText(text)
+	goUpButton.Clicked(func() {
+		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewHomeScene())
+	})
+
+	goUpHbox := gtk.NewHBox(false, 5)
+	goUpHbox.PackStart(goUpButton, false, false, 0)
+	goUpHbox.PackStart(gtk.NewLabel(text), false, false, 0)
+
+	return goUpHbox
 }
 
 func (jobScene *JobScene) buildRunButton() gtk.IWidget {
@@ -102,7 +120,7 @@ func (jobScene *JobScene) buildConfigureButton() gtk.IWidget {
 			panic("couldn't convert to job")
 		}
 
-		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewEditJobView(jobScene.Job))
+		jobScene.TaskrunnerGUI.RenderScene(jobScene.TaskrunnerGUI.NewEditJobView(jobScene.Job, jobScene.TaskrunnerGUI.udevRulesDAL))
 	}, jobScene)
 
 	hbox := gtk.NewHBox(false, 5)
@@ -119,14 +137,13 @@ func (jobScene *JobScene) buildTriggersVBox() *gtk.VBox {
 }
 
 func (jobScene *JobScene) buildUdevJobsSummary() gtk.IWidget {
-	udevDAL := triggers.NewUdevRulesDAL("/etc/udev/rules.d")
-	rules, err := udevDAL.GetRules(jobScene.Job)
+	rules, err := jobScene.TaskrunnerGUI.udevRulesDAL.GetRules(jobScene.Job)
 	if nil != err {
 		return gtk.NewLabel(fmt.Sprintf("Error getting Udev rules: %s", err))
 	}
 
 	if 0 == len(rules) {
-		return gtk.NewLabel("No Udev rules")
+		return gtk.NewLabel("No udev rules trigger this job")
 	}
 
 	vbox := gtk.NewVBox(false, 0)
@@ -145,7 +162,7 @@ func (jobScene *JobScene) buildCronJobsSummary() gtk.IWidget {
 	}
 
 	if 0 == len(cronJobs) {
-		return gtk.NewLabel("No cron jobs")
+		return gtk.NewLabel("No cron jobs trigger this job")
 	}
 
 	vbox := gtk.NewVBox(false, 0)

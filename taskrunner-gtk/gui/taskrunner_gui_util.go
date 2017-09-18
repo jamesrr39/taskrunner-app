@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/mattn/go-gtk/gtk"
@@ -100,4 +101,25 @@ func GetTimeAgo(jobTime time.Time) string {
 	}
 	return strconv.FormatInt(secondsAgo, 10) + " seconds"
 
+}
+
+func formatDuration(duration time.Duration) string {
+	var fragments []string
+	if 0 != duration.Hours() {
+		fragments = append(fragments, fmt.Sprintf("%d hours", duration.Hours()))
+	}
+
+	if 0 != duration.Minutes() {
+		fragments = append(fragments, fmt.Sprintf("%d minutes", duration.Minutes()))
+	}
+
+	if 0 != duration.Seconds() {
+		fragments = append(fragments, fmt.Sprintf("%d second", duration.Minutes()))
+	}
+
+	if 0 == len(fragments) {
+		return "less than 1 second"
+	}
+
+	return strings.Join(fragments, " ")
 }

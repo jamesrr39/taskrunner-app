@@ -3,13 +3,13 @@ package main
 import (
 	"log"
 	"os"
-	"runtime"
 	"time"
 
-	"github.com/jamesrr39/goutil/user"
+	"github.com/jamesrr39/goutil/userextra"
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/jamesrr39/taskrunner-app/taskrunner-gtk/gui"
 	"github.com/jamesrr39/taskrunner-app/taskrunnerdal"
+	"github.com/jamesrr39/taskrunner-app/triggers"
 
 	"github.com/alecthomas/kingpin"
 	"github.com/mattn/go-gtk/gdk"
@@ -21,7 +21,6 @@ var (
 	taskrunnerDAL          *taskrunnerdal.TaskrunnerDAL
 	taskrunnerApplication  *kingpin.Application
 	jobLogMaxLines         *uint
-	shouldMonitor          *bool
 	applicationMode        ApplicationMode
 	headlessJobNameArg     *string
 	headlessTriggerNameArg *string
@@ -35,24 +34,19 @@ const (
 )
 
 func main() {
-
 	taskrunnerApplication = kingpin.New("Taskrunner GUI", "gtk gui for taskrunner")
 	parseApplicationFlags()
 	kingpin.MustParse(taskrunnerApplication.Parse(os.Args[1:]))
-
-	if *shouldMonitor {
-		go monitor()
-	}
 
 	switch applicationMode {
 	case ApplicationModeGUI:
 		guiMain()
 	case ApplicationModeRunJobHeadless:
-		runJobHeadlessMain(*headlessJobNameArg, *headlessTriggerNameArg)
+		runJobHeadlessMain(taskrunnerDAL, *headlessJobNameArg, *headlessTriggerNameArg)
 	}
 }
 
-func runJobHeadlessMain(jobName string, trigger string) {
+func runJobHeadlessMain(taskrunnerDAL *taskrunnerdal.TaskrunnerDAL, jobName string, trigger string) {
 	job, err := taskrunnerDAL.GetJobByName(jobName)
 	if nil != err {
 		log.Fatalf("Error finding job with name: '%s'. Error: %s\n", jobName, err)
@@ -72,7 +66,8 @@ func guiMain() {
 	gdk.ThreadsEnter()
 	gtk.Init(nil)
 
-	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines, "/opt/taskrunner"})
+	udevDAL := triggers.NewUdevRulesDAL("/etc/udev/rules.d")
+	taskrunnerGUI := gui.NewTaskrunnerGUI(taskrunnerDAL, udevDAL, gui.TaskrunnerGUIOptions{*jobLogMaxLines, "/opt/taskrunner"}) // todo mock
 	taskrunnerGUI.RenderScene(taskrunnerGUI.NewHomeScene())
 
 	gtk.Main()
@@ -83,9 +78,6 @@ func parseApplicationFlags() {
 		Flag("taskrunner-dir", "Directory the taskruner uses to store job configs and logs of job runs.").
 		Default("~/.local/share/github.com/jamesrr39/taskrunner-app").
 		String()
-
-	shouldMonitor = taskrunnerApplication.Flag("monitor", "print information about the number of goroutines used to the log output").
-		Bool()
 
 	jobLogMaxLines = taskrunnerApplication.Flag("job-log-max-lines", "maximum number of lines to display in the job output. Lines after that are not shown in the UI, but the UI indicates where the whole log file is instead").
 		Default("10000").
@@ -101,12 +93,12 @@ func parseApplicationFlags() {
 			applicationMode = ApplicationModeRunJobHeadless
 		}
 
-		expandedDir, err := user.ExpandUser(*taskrunnerDir)
+		expandedDir, err := userextra.ExpandUser(*taskrunnerDir)
 		if nil != err {
 			return err
 		}
 
-		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir)
+		taskrunnerDAL, err = taskrunnerdal.NewTaskrunnerDALAndEnsureDirectories(expandedDir, providesNow)
 		if nil != err {
 			return err
 		}
@@ -115,12 +107,6 @@ func parseApplicationFlags() {
 	})
 }
 
-func monitor() {
-	meminfo := runtime.MemStats{}
-
-	for {
-		time.Sleep(time.Second)
-		runtime.ReadMemStats(&meminfo)
-		log.Printf("using %d goroutines (including 1 for monitoring).Memory %d, total: %d\n", runtime.NumGoroutine(), meminfo.Alloc, meminfo.TotalAlloc)
-	}
+func providesNow() time.Time {
+	return time.Now()
 }

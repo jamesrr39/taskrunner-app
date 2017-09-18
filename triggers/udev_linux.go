@@ -5,12 +5,17 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
+)
+
+const (
+	idVendorKey  = "ATTRS{idVendor}=="
+	idProductKey = "ATTRS{idProduct}=="
+	runKey       = "RUN+="
 )
 
 type UdevRulesDAL struct {
@@ -49,7 +54,7 @@ func (u *UdevRulesDAL) GetRules(job *taskrunner.Job) ([]*UdevRule, error) {
 			return err
 		}
 		defer file.Close()
-		log.Printf("looking in %s\n", path)
+
 		rules = append(rules, rulesFromFile(file, path, job)...)
 		return nil
 	})
@@ -60,12 +65,6 @@ func (u *UdevRulesDAL) GetRules(job *taskrunner.Job) ([]*UdevRule, error) {
 
 	return rules, nil
 }
-
-const (
-	idVendorKey  = "ATTRS{idVendor}=="
-	idProductKey = "ATTRS{idProduct}=="
-	runKey       = "RUN+="
-)
 
 func rulesFromFile(file io.Reader, filePath string, job *taskrunner.Job) []*UdevRule {
 	var rules []*UdevRule

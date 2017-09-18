@@ -3,6 +3,8 @@ package taskrunnerdal
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/jamesrr39/taskrunner-app/taskexecutor"
 )
 
 type TaskrunnerDAL struct {
@@ -14,11 +16,11 @@ type TaskrunnerDAL struct {
 
 const jobsDirName string = "jobs"
 
-func NewTaskrunnerDALAndEnsureDirectories(basePath string) (*TaskrunnerDAL, error) {
+func NewTaskrunnerDALAndEnsureDirectories(basePath string, nowProvider taskexecutor.NowProvider) (*TaskrunnerDAL, error) {
 	jobsPath := filepath.Join(basePath, jobsDirName)
 	jobDAL := NewJobDAL(jobsPath)
 
-	dal := &TaskrunnerDAL{basePath, jobsPath, jobDAL, NewJobRunsDAL(jobDAL)}
+	dal := &TaskrunnerDAL{basePath, jobsPath, jobDAL, NewJobRunsDAL(jobDAL, nowProvider)}
 
 	err := dal.ensureDirectories()
 	if nil != err {
