@@ -14,9 +14,11 @@ Installing GTK on ubuntu:
 
     sudo apt install build-essential libgtk2.0-dev
 
-Then `git clone`, and `glide install` to install dependencies.
+Project can be built as a normal Go project using the standard Go tool.
 
-## Run
+## Build & Run
+
+    go run taskrunner-app-main.go
 
 ### Open GUI summary of jobs
 
