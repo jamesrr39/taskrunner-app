@@ -12,13 +12,13 @@ First, you need to have Go and GTK 2 installed.
 
 Installing GTK on ubuntu:
 
-    sudo apt install build-essential libgtk2.0-dev
+    sudo make install_dependencies
 
 Project can be built as a normal Go project using the standard Go tool.
 
 ## Build & Run
 
-    go run taskrunner-app-main.go
+    make run
 
 ### Open GUI summary of jobs
 

@@ -38,3 +38,7 @@ func (dal *TaskrunnerDAL) ensureDirectories() error {
 func (dal *TaskrunnerDAL) String() string {
 	return dal.basePath
 }
+
+func (dal *TaskrunnerDAL) GetBasePath() string {
+	return dal.basePath
+}

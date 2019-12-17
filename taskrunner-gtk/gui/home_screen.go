@@ -1,10 +1,11 @@
 package gui
 
 import (
+	"fmt"
 	"strconv"
-	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"time"
 
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
 	"github.com/mattn/go-gtk/gtk"
@@ -31,6 +32,8 @@ func (homeScreen *HomeScene) Title() string {
 func (homeScreen *HomeScene) Content() gtk.IWidget {
 	box := gtk.NewVBox(false, 0)
 	var jobsTableWidget gtk.IWidget
+
+	box.PackStart(gtk.NewLabel(fmt.Sprintf("Data directory: %q", homeScreen.TaskrunnerDAL.GetBasePath())), false, false, 2)
 
 	jobsTable, err := homeScreen.buildJobsSummaryTable()
 	if nil != err {
