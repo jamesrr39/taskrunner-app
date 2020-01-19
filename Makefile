@@ -6,3 +6,9 @@ install_dependencies:
 .PHONY: run
 run:
 	go run taskrunner-app-main.go
+
+.PHONY: install
+install:
+	test -n "${GOBIN}"
+	go build -o ${GOBIN}/taskrunner-app taskrunner-app-main.go
+
