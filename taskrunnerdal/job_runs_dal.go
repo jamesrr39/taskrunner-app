@@ -12,10 +12,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bradfitz/slice"
 	"github.com/jamesrr39/taskrunner-app/taskexecutor"
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
-
-	"github.com/bradfitz/slice"
 )
 
 type JobRunsDAL struct {
@@ -34,7 +33,7 @@ func (jobRunsDAL *JobRunsDAL) CreateAndRun(jobRun *taskrunner.JobRun, jobRunStat
 	if jobRun.Id != 0 {
 		return fmt.Errorf("expected the jobRun to have an Id of 0 but had %d", jobRun.Id)
 	}
-	log.Println("IN JOB RUN CREATE AND RUN")
+
 	jobRunStatusChanInternalChan := make(chan *taskrunner.JobRun)
 
 	go jobRunsDAL.listenAndTriggerSendToJobRunStatusChan(jobRunStatusChanInternalChan, jobRunStatusChangeExternalChan, jobRun)

@@ -3,12 +3,10 @@ package gui
 import (
 	"fmt"
 	"log"
-
-	"github.com/jamesrr39/taskrunner-app/taskrunner"
-
 	"strconv"
 	"time"
 
+	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/jamesrr39/taskrunner-app/triggers"
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/glib"
@@ -94,7 +92,6 @@ func (jobScene *JobScene) buildRunButton() gtk.IWidget {
 			panic("couldn't convert to job")
 		}
 		go func(job *taskrunner.Job, taskrunnerGUI *TaskrunnerGUI) {
-			log.Printf("about to run %s (id: %d)\n", job.Name, job.Id)
 			jobRun := job.NewJobRun("GUI")
 
 			err := taskrunnerGUI.TaskrunnerDAL.JobRunsDAL.CreateAndRun(jobRun, taskrunnerGUI.JobStatusChangeChan)
