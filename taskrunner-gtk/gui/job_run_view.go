@@ -3,7 +3,6 @@ package gui
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
@@ -30,7 +29,7 @@ func (jobRunScene *JobRunScene) OnJobRunStatusChange(jobRun *taskrunner.JobRun) 
 }
 
 func (jobRunScene *JobRunScene) Title() string {
-	return "#" + strconv.FormatUint(jobRunScene.jobRun.Id, 10) + " :: " + jobRunScene.jobRun.Job.Name
+	return fmt.Sprintf("#%d::%s", jobRunScene.jobRun.Id, jobRunScene.jobRun.Job.Name)
 }
 
 func (jobRunScene *JobRunScene) buildJobRunViewActionsBox() *gtk.VBox {
@@ -117,7 +116,7 @@ func (jobRunScene *JobRunScene) buildTextarea(jobRun *taskrunner.JobRun) *gtk.Te
 
 	logFile, err := jobRunScene.TaskrunnerGUI.TaskrunnerDAL.JobRunsDAL.GetJobRunLog(jobRun)
 	if nil != err {
-		errMessage := fmt.Sprintf("couldn't read job log file for %s. Error: %s", jobRun, err)
+		errMessage := fmt.Sprintf("couldn't read job log file for job run ID %d (job %d \"%s\"). Error: %s", jobRun.Id, jobRun.Job.Id, jobRun.Job.Name, err)
 		logTextBuffer.InsertAtCursor(errMessage)
 		log.Println(errMessage)
 	} else {

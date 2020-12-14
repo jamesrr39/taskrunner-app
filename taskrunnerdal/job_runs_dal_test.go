@@ -4,16 +4,21 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 	"github.com/stretchr/testify/assert"
 )
 
+func mockNowFunc() time.Time {
+	return time.Unix(0, 0)
+}
+
 func generateTestTaskrunerDAL(t *testing.T) *TaskrunnerDAL {
 	tempdirPath, err := ioutil.TempDir("", "")
 	assert.Nil(t, err)
 
-	taskrunnerDAL, err := NewTaskrunnerDALAndEnsureDirectories(tempdirPath)
+	taskrunnerDAL, err := NewTaskrunnerDALAndEnsureDirectories(tempdirPath, mockNowFunc)
 	assert.Nil(t, err)
 
 	return taskrunnerDAL

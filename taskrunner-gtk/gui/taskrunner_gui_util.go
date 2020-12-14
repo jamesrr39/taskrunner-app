@@ -106,15 +106,15 @@ func GetTimeAgo(jobTime time.Time) string {
 func formatDuration(duration time.Duration) string {
 	var fragments []string
 	if 0 != duration.Hours() {
-		fragments = append(fragments, fmt.Sprintf("%d hours", duration.Hours()))
+		fragments = append(fragments, fmt.Sprintf("%f hours", duration.Hours()))
 	}
 
 	if 0 != duration.Minutes() {
-		fragments = append(fragments, fmt.Sprintf("%d minutes", duration.Minutes()))
+		fragments = append(fragments, fmt.Sprintf("%f minutes", duration.Minutes()))
 	}
 
 	if 0 != duration.Seconds() {
-		fragments = append(fragments, fmt.Sprintf("%d second", duration.Minutes()))
+		fragments = append(fragments, fmt.Sprintf("%f second", duration.Minutes()))
 	}
 
 	if 0 == len(fragments) {

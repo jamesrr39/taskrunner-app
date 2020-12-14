@@ -12,3 +12,6 @@ install:
 	test -n "${GOBIN}"
 	go build -o ${GOBIN}/taskrunner-app taskrunner-app-main.go
 
+.PHONY: test
+test:
+	go test ./...

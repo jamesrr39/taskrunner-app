@@ -9,10 +9,10 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"time"
 
-	"github.com/bradfitz/slice"
 	"github.com/jamesrr39/taskrunner-app/taskexecutor"
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
 )
@@ -144,7 +144,7 @@ func (jobRunsDAL *JobRunsDAL) GetAllForJob(job *taskrunner.Job) ([]*taskrunner.J
 
 	}
 
-	slice.Sort(runs, func(i, j int) bool {
+	sort.Slice(runs, func(i, j int) bool {
 		return runs[i].Id > runs[j].Id
 	})
 
