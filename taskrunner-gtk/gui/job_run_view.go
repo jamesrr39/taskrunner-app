@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/jamesrr39/taskrunner-app/taskrunner"
-
 	"github.com/mattn/go-gtk/gdk"
 	"github.com/mattn/go-gtk/gtk"
 )
@@ -57,9 +56,13 @@ func (jobRunScene *JobRunScene) buildJobRunViewActionsBox() *gtk.VBox {
 func (jobRunScene *JobRunScene) Content() gtk.IWidget {
 	jobRun := jobRunScene.jobRun
 
+	logLocationLbl := gtk.NewLabel(jobRunScene.JobRunsDAL.GetJobRunLogLocation(jobRun))
+	logLocationLbl.SetSelectable(true)
+
 	vbox := gtk.NewVBox(false, 0)
 	vbox.PackStart(jobRunScene.buildTopBox(), false, false, 0)
 	vbox.PackStart(gtk.NewLabel("Console Output:"), false, false, 0)
+	vbox.PackStart(logLocationLbl, false, false, 0)
 	vbox.PackStart(jobRunScene.buildTextareaScrollWindow(jobRun), true, true, 0)
 
 	return vbox
