@@ -24,7 +24,14 @@ Project can be built as a normal Go project using the standard Go tool.
 
 ### Run a job headlessly
 
+It's also possible to run a job headlessly, and have the output saved so that it can be viewed in the UI next time it's opened. This is ideal for use by scripts and cron jobs.
+
+The `--trigger` may be viewed as a kind of "user-agent", and is something that is surfaced later in the GUI.
+
     ./taskrunner-app --run-job="failing job" --trigger="my custom trigger
 	
+### More options
 
-`./taskrunner-app -h` gives more options.
+```
+./taskrunner-app -h
+```
