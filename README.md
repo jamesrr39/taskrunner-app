@@ -1,8 +1,8 @@
 # Taskrunner-app
 
-Taskrunner is a CLI & GUI application, with the intention of sitting somewhere between cron jobs and Jenkins.
+`Taskrunner` is a tool that looks after your repetitive tasks, and stores the output somewhere you can find the output easily.
 
-The idea is to have a tool that looks after your repetitive tasks, and stores the output somewhere you can find the output easily.
+You could think of it somewhat as a lightweight alternative to Jenkins, albeit without many of the features that Jenkins provides.
 
 ## Install
 
