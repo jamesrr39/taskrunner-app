@@ -2,7 +2,7 @@
 
 `Taskrunner` is a tool that looks after your repetitive tasks, and stores the output somewhere you can find the output easily.
 
-You could think of it somewhat as a lightweight alternative to Jenkins, albeit without many of the features that Jenkins provides.
+You could think of it somewhat as a lightweight desktop-based alternative to Jenkins, more lightweight and easier to set up, but without many of the features Jenkins provides.
 
 ## Install
 
